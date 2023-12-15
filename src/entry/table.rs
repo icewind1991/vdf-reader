@@ -31,8 +31,8 @@ impl Table {
     pub fn load(reader: &mut Reader) -> Result<Table> {
         let mut map = HashMap::new();
 
-        loop {
-            match reader.event()? {
+        while let Some(event) = reader.event() {
+            match event? {
                 Event::Entry {
                     key: Item::Statement { .. },
                     span,
@@ -58,7 +58,7 @@ impl Table {
                     insert(&mut map, name.into(), Table::load(reader)?.into())
                 }
 
-                Event::GroupEnd { .. } | Event::End { .. } => break,
+                Event::GroupEnd { .. } => break,
             }
         }
 

@@ -16,11 +16,19 @@ pub enum Token {
     #[display("end of group")]
     GroupEnd,
     /// An enclosed or bare item.
-    #[regex("(\"([^\"\\\\]|\\\\.)*\")|([^# \t\n{}\"][^ \"\t\n]*)", priority = 0)]
+    #[regex("[^# \t\n{}\"][^ \"\t\n]*", priority = 0)]
     #[display("item")]
     Item,
+    /// An enclosed or bare item.
+    #[regex("\"([^\"\\\\]|\\\\.)*\"")]
+    #[display("item")]
+    QuotedItem,
     /// An enclosed or bare statement.
-    #[regex("(\"#([^\"\\\\]|\\\\.)*\")|(#[^ \"\t\n]+)")]
+    #[regex("\"#([^\"\\\\]|\\\\.)*\"")]
+    #[display("statement")]
+    QuotedStatement,
+    /// An enclosed or bare statement.
+    #[regex("#[^ \"\t\n]+")]
     #[display("statement")]
     Statement,
 }
@@ -46,11 +54,11 @@ mod tests {
     #[test]
     fn next() {
         assert_eq!(get_token("test"), Some(Ok(Token::Item)));
-        assert_eq!(get_token("\"test\""), Some(Ok(Token::Item)));
-        assert_eq!(get_token("\"\""), Some(Ok(Token::Item)));
-        assert_eq!(get_token("\"\" "), Some(Ok(Token::Item)));
+        assert_eq!(get_token("\"test\""), Some(Ok(Token::QuotedItem)));
+        assert_eq!(get_token("\"\""), Some(Ok(Token::QuotedItem)));
+        assert_eq!(get_token("\"\" "), Some(Ok(Token::QuotedItem)));
         assert_eq!(get_token("#test"), Some(Ok(Token::Statement)));
-        assert_eq!(get_token("\"#test\""), Some(Ok(Token::Statement)));
+        assert_eq!(get_token("\"#test\""), Some(Ok(Token::QuotedStatement)));
         assert_eq!(get_token("{"), Some(Ok(Token::GroupStart)));
         assert_eq!(get_token("}"), Some(Ok(Token::GroupEnd)));
         assert_eq!(get_token("//test more"), None);
@@ -67,12 +75,12 @@ mod tests {
         assert_eq!(get_token("lol}"), Some(Ok(Token::Item)));
         assert_eq!(get_token("#lol}"), Some(Ok(Token::Statement)));
 
-        assert_eq!(get_token("\"test\""), Some(Ok(Token::Item)));
-        assert_eq!(get_token("\"#test\""), Some(Ok(Token::Statement)));
+        assert_eq!(get_token("\"test\""), Some(Ok(Token::QuotedItem)));
+        assert_eq!(get_token("\"#test\""), Some(Ok(Token::QuotedStatement)));
 
-        assert_eq!(get_token("\"te\\\"st\""), Some(Ok(Token::Item)));
-        assert_eq!(get_token("\"te\\st\""), Some(Ok(Token::Item)));
-        assert_eq!(get_token("\"#te\\\"st\""), Some(Ok(Token::Statement)));
+        assert_eq!(get_token("\"te\\\"st\""), Some(Ok(Token::QuotedItem)));
+        assert_eq!(get_token("\"te\\st\""), Some(Ok(Token::QuotedItem)));
+        assert_eq!(get_token("\"#te\\\"st\""), Some(Ok(Token::QuotedStatement)));
     }
 
     #[test]
@@ -89,12 +97,12 @@ mod tests {
             Ok(vec![
                 (Token::Item, "foo"),
                 (Token::GroupStart, "{"),
-                (Token::Item, r#""asd""#),
-                (Token::Item, r#""bar""#),
+                (Token::QuotedItem, r#""asd""#),
+                (Token::QuotedItem, r#""bar""#),
                 (Token::Statement, r#"#include"#),
                 (Token::Item, r#"other"#),
                 (Token::Item, r#"empty"#),
-                (Token::Item, r#""""#),
+                (Token::QuotedItem, r#""""#),
                 (Token::GroupEnd, "}")
             ])
         )

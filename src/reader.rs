@@ -44,9 +44,6 @@ pub enum Event<'a> {
         value: Item<'a>,
         span: Span,
     },
-
-    /// EOF has been reached.
-    End { span: Span },
 }
 
 impl Event<'_> {
@@ -56,7 +53,6 @@ impl Event<'_> {
             Event::GroupStart { span, .. } => span.clone(),
             Event::GroupEnd { span, .. } => span.clone(),
             Event::Entry { span, .. } => span.clone(),
-            Event::End { span, .. } => span.clone(),
         }
     }
 }
@@ -79,34 +75,36 @@ impl<'a> From<&'a str> for Reader<'a> {
 impl<'a> Reader<'a> {
     /// Get the next event, this does copies.
     #[allow(dead_code)]
-    pub fn event(&mut self) -> Result<Event> {
+    pub fn event(&mut self) -> Option<Result<Event>> {
+        const VALID_KEY: &[Token] = &[
+            Token::Item,
+            Token::QuotedItem,
+            Token::GroupEnd,
+            Token::Statement,
+            Token::QuotedStatement,
+        ];
+
         let key = match self.lexer.next() {
             None => {
-                return Ok(Event::End {
-                    span: self.lexer.span(),
-                })
+                return None;
             }
             Some((Err(_), span)) => {
-                return Err(NoValidTokenError::new(
-                    &[Token::Item, Token::GroupEnd, Token::Statement],
+                return Some(Err(NoValidTokenError::new(
+                    VALID_KEY,
                     span.into(),
                     self.content.into(),
                 )
-                .into());
+                .into()));
             }
-            Some((Ok(Token::GroupEnd), span)) => return Ok(Event::GroupEnd { span }),
-            Some((Ok(Token::GroupStart), span)) => {
-                return Err(UnexpectedTokenError::new(
-                    &[Token::Item, Token::GroupEnd, Token::Statement],
-                    Some(Token::GroupStart),
-                    span.into(),
-                    self.content.into(),
-                )
-                .into())
-            }
+            Some((Ok(Token::GroupEnd), span)) => return Some(Ok(Event::GroupEnd { span })),
 
             Some((Ok(Token::Item), span)) => Item::Value {
                 content: string(self.lexer.slice()),
+                span,
+            },
+
+            Some((Ok(Token::QuotedItem), span)) => Item::Value {
+                content: quoted_string(self.lexer.slice()),
                 span,
             },
 
@@ -114,59 +112,80 @@ impl<'a> Reader<'a> {
                 content: string(self.lexer.slice()),
                 span,
             },
+
+            Some((Ok(Token::QuotedStatement), span)) => Item::Statement {
+                content: quoted_string(self.lexer.slice()),
+                span,
+            },
+
+            Some((Ok(token), span)) => {
+                return Some(Err(UnexpectedTokenError::new(
+                    VALID_KEY,
+                    Some(token),
+                    span.into(),
+                    self.content.into(),
+                )
+                .into()))
+            }
         };
+
+        const VALID_VALUE: &[Token] = &[Token::Item, Token::QuotedItem, Token::GroupStart];
 
         let value = match self.lexer.next() {
             None => {
-                return Err(UnexpectedTokenError::new(
-                    &[Token::Item, Token::GroupEnd, Token::Statement],
+                return Some(Err(UnexpectedTokenError::new(
+                    VALID_VALUE,
                     None,
                     self.lexer.span().into(),
                     self.content.into(),
                 )
-                .into());
+                .into()));
             }
 
             Some((Err(_), span)) => {
-                return Err(NoValidTokenError::new(
-                    &[Token::Item, Token::GroupEnd, Token::Statement],
+                return Some(Err(NoValidTokenError::new(
+                    VALID_VALUE,
                     span.into(),
                     self.content.into(),
                 )
-                .into());
-            }
-
-            Some((Ok(Token::GroupEnd), span)) => {
-                return Err(UnexpectedTokenError::new(
-                    &[Token::Item, Token::GroupStart, Token::Statement],
-                    Some(Token::GroupEnd),
-                    span.into(),
-                    self.content.into(),
-                )
-                .into())
+                .into()));
             }
 
             Some((Ok(Token::GroupStart), span)) => {
-                return Ok(Event::GroupStart {
+                return Some(Ok(Event::GroupStart {
                     name: key.into_content(),
                     span,
-                })
+                }))
             }
+
+            Some((Ok(Token::QuotedItem), span)) => Item::Value {
+                content: quoted_string(self.lexer.slice()),
+                span,
+            },
 
             Some((Ok(Token::Item), span)) => Item::Value {
                 content: string(self.lexer.slice()),
                 span,
             },
 
-            Some((Ok(Token::Statement), span)) => Item::Statement {
-                content: string(self.lexer.slice()),
-                span,
-            },
+            Some((Ok(token), span)) => {
+                return Some(Err(UnexpectedTokenError::new(
+                    VALID_VALUE,
+                    Some(token),
+                    span.into(),
+                    self.content.into(),
+                )
+                .into()))
+            }
         };
 
         let span = key.span().start..value.span().end;
-        Ok(Event::Entry { key, value, span })
+        Some(Ok(Event::Entry { key, value, span }))
     }
+}
+
+fn quoted_string(source: &str) -> Cow<str> {
+    string(&source[1..source.len() - 1])
 }
 
 fn string(source: &str) -> Cow<str> {
