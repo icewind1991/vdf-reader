@@ -9,5 +9,5 @@ fn test_parse(path: &str) {
     let raw = read_to_string(path).unwrap();
     let mut reader = Reader::from(raw.as_str());
     let parsed = Table::load(&mut reader).expect("failed to parse test data");
-    insta::assert_ron_snapshot!(parsed);
+    insta::assert_ron_snapshot!(path, parsed);
 }
