@@ -38,7 +38,7 @@ impl Display for ExpectedTokens<'_> {
 
 /// A token that wasn't expected was found while parsing
 #[derive(Debug, Clone, Diagnostic)]
-#[diagnostic(code(php_literal_parser::unexpected_token))]
+#[diagnostic(code(vmt_reader::unexpected_token))]
 pub struct UnexpectedTokenError {
     #[label("Expected {}", ExpectedTokens(self.expected))]
     err_span: SourceSpan,
@@ -86,7 +86,7 @@ impl Error for UnexpectedTokenError {}
 
 /// A token that wasn't expected was found while parsing
 #[derive(Debug, Clone, Diagnostic)]
-#[diagnostic(code(php_literal_parser::unexpected_token))]
+#[diagnostic(code(vmt_reader::no_valid_token))]
 pub struct NoValidTokenError {
     #[label("Expected {}", ExpectedTokens(self.expected))]
     err_span: SourceSpan,
