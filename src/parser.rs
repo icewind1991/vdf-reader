@@ -4,9 +4,13 @@ use std::str;
 
 /// Parser token.
 #[derive(PartialEq, Debug, Logos, Display, Clone)]
-#[logos(skip r"[ \t\n\f\r]+")] // whitespace
+#[logos(skip r"[ \t\f\r]+")] // whitespace
 #[logos(skip r"//[^\n]*")] // comments
 pub enum Token {
+    /// Newline
+    #[regex("\n([ \t\r]\n)*")]
+    #[display("newline")]
+    NewLine,
     /// A group is starting.
     #[token("{")]
     #[display("start of group")]
@@ -16,7 +20,7 @@ pub enum Token {
     #[display("end of group")]
     GroupEnd,
     /// An enclosed or bare item.
-    #[regex("[^# \t\n{}\"][^ \"\t\n]*", priority = 0)]
+    #[regex("[^# \t\n{}\"][^ \t\n]*", priority = 0)]
     #[display("item")]
     Item,
     /// An enclosed or bare item.
@@ -92,17 +96,26 @@ mod tests {
                 // a comment
                 #include other
                 empty ""
+                \\"broken" comment
             }"#
             ),
             Ok(vec![
                 (Token::Item, "foo"),
                 (Token::GroupStart, "{"),
+                (Token::NewLine, "\n"),
                 (Token::QuotedItem, r#""asd""#),
                 (Token::QuotedItem, r#""bar""#),
+                (Token::NewLine, "\n"),
+                (Token::NewLine, "\n"),
                 (Token::Statement, r#"#include"#),
                 (Token::Item, r#"other"#),
+                (Token::NewLine, "\n"),
                 (Token::Item, r#"empty"#),
                 (Token::QuotedItem, r#""""#),
+                (Token::NewLine, "\n"),
+                (Token::Item, r#"\\"broken""#),
+                (Token::Item, r#"comment"#),
+                (Token::NewLine, "\n"),
                 (Token::GroupEnd, "}")
             ])
         )

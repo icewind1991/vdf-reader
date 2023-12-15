@@ -1,6 +1,6 @@
 use super::{Result, Token};
 use crate::error::{NoValidTokenError, UnexpectedTokenError};
-use logos::{Lexer, Span, SpannedIter};
+use logos::{Lexer, Logos, Span, SpannedIter};
 use std::borrow::Cow;
 
 /// Kinds of item.
@@ -67,6 +67,7 @@ impl Event<'_> {
 pub struct Reader<'a> {
     pub(crate) content: &'a str,
     lexer: SpannedIter<'a, Token>,
+    peeked: Option<(Result<Token, <Token as Logos<'a>>::Error>, Span)>,
 }
 
 impl<'a> From<&'a str> for Reader<'a> {
@@ -74,14 +75,43 @@ impl<'a> From<&'a str> for Reader<'a> {
         Reader {
             content,
             lexer: Lexer::new(content).spanned(),
+            peeked: None,
         }
     }
 }
 
 impl<'a> Reader<'a> {
+    fn token(&mut self) -> Option<(Result<Token, <Token as Logos>::Error>, Span)> {
+        if let Some((token, span)) = self.peeked.take() {
+            Some((token, span))
+        } else {
+            self.lexer.next()
+        }
+    }
+
+    fn peek(&mut self) -> Option<(Result<Token, <Token as Logos>::Error>, Span)> {
+        if self.peeked.is_none() {
+            self.peeked = self.lexer.next();
+        }
+        self.peeked.clone()
+    }
+
+    fn token_eat_newlines(&mut self) -> Option<(Result<Token, <Token as Logos>::Error>, Span)> {
+        loop {
+            let (token, span) = self.token()?;
+            match token {
+                Err(e) => return Some((Err(e), span)),
+                Ok(Token::NewLine) => {
+                    continue;
+                }
+                Ok(token) => return Some((Ok(token), span)),
+            }
+        }
+    }
+
     /// Get the next event, this does copies.
     #[allow(dead_code)]
-    pub fn event(&mut self) -> Option<Result<Event>> {
+    pub fn event(&mut self) -> Option<Result<Event<'a>>> {
         const VALID_KEY: &[Token] = &[
             Token::Item,
             Token::QuotedItem,
@@ -90,7 +120,7 @@ impl<'a> Reader<'a> {
             Token::QuotedStatement,
         ];
 
-        let key = match self.lexer.next() {
+        let key = match self.token_eat_newlines() {
             None => {
                 return None;
             }
@@ -137,7 +167,46 @@ impl<'a> Reader<'a> {
 
         const VALID_VALUE: &[Token] = &[Token::Item, Token::QuotedItem, Token::GroupStart];
 
-        let value = match self.lexer.next() {
+        // only a group start is allowed to have newlines between the key and value
+        while matches!(self.peek(), Some((Ok(Token::NewLine), _))) {
+            let _newline = self.token();
+            if !matches!(
+                self.peek(),
+                Some((Ok(Token::GroupStart | Token::NewLine), _))
+            ) {
+                let span = key.span().end..key.span().end;
+                match self.peeked.clone() {
+                    Some((Ok(token), _)) => {
+                        return Some(Err(UnexpectedTokenError::new(
+                            &[Token::GroupStart],
+                            Some(token),
+                            span.into(),
+                            self.content.into(),
+                        )
+                        .into()))
+                    }
+                    Some((Err(_), _)) => {
+                        return Some(Err(NoValidTokenError::new(
+                            VALID_VALUE,
+                            span.into(),
+                            self.content.into(),
+                        )
+                        .into()));
+                    }
+                    None => {
+                        return Some(Err(UnexpectedTokenError::new(
+                            VALID_VALUE,
+                            None,
+                            span.into(),
+                            self.content.into(),
+                        )
+                        .into()))
+                    }
+                }
+            }
+        }
+
+        let value = match self.token() {
             None => {
                 return Some(Err(UnexpectedTokenError::new(
                     VALID_VALUE,
@@ -187,6 +256,14 @@ impl<'a> Reader<'a> {
 
         let span = key.span().start..value.span.end;
         Some(Ok(Event::Entry { key, value, span }))
+    }
+}
+
+impl<'a> Iterator for Reader<'a> {
+    type Item = Result<Event<'a>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.event()
     }
 }
 

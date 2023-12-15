@@ -14,3 +14,4 @@ serde = { version = "1.0.193", features = ["derive"] }
 test-case = "3.3.1"
 insta = { version = "1.34.0", features = ["ron"] }
 miette = { version = "5.10.0", features = ["fancy"] }
+walkdir = "2.4.0"

@@ -5,6 +5,7 @@ expression: parsed
 Table({
   "#base": Statement(Statement("panelBase.res")),
   "Resource/specificPanel.res": Table(Table({
+    "\\\"$translucent\"": Value(Value("1")),
     "array": Array(Array([
       Value(Value("1")),
       Value(Value("2")),

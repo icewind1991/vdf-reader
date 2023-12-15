@@ -9,4 +9,6 @@
     array 2
     array "3"
     windows_path "C:\test\no newline"
+
+    \\"$translucent" 1 // this is read vdf written by real valve developers
 }
