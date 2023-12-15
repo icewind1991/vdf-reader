@@ -13,9 +13,9 @@ impl From<Cow<'_, str>> for Statement {
     }
 }
 
-impl Into<Entry> for Statement {
-    fn into(self) -> Entry {
-        Entry::Statement(self)
+impl From<Statement> for Entry {
+    fn from(statement: Statement) -> Self {
+        Entry::Statement(statement)
     }
 }
 

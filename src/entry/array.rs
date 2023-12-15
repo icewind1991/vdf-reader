@@ -12,9 +12,9 @@ impl From<Entry> for Array {
     }
 }
 
-impl Into<Entry> for Array {
-    fn into(self) -> Entry {
-        Entry::Array(self)
+impl From<Array> for Entry {
+    fn from(array: Array) -> Self {
+        Entry::Array(array)
     }
 }
 

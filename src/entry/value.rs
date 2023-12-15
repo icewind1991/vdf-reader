@@ -12,9 +12,9 @@ impl From<Cow<'_, str>> for Value {
     }
 }
 
-impl Into<Entry> for Value {
-    fn into(self) -> Entry {
-        Entry::Value(self)
+impl From<Value> for Entry {
+    fn from(value: Value) -> Self {
+        Entry::Value(value)
     }
 }
 

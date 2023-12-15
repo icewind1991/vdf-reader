@@ -44,9 +44,9 @@ impl Entry {
     /// Try to get the named entry.
     pub fn get<S: AsRef<str>>(&self, name: S) -> Option<&Entry> {
         match self {
-            &Entry::Table(ref value) => value.get(name.as_ref()),
+            Entry::Table(value) => value.get(name.as_ref()),
 
-            &Entry::Array(ref value) => name
+            Entry::Array(value) => name
                 .as_ref()
                 .parse::<usize>()
                 .ok()
@@ -58,7 +58,7 @@ impl Entry {
 
     /// Try to convert the entry to the given type.
     pub fn to<T: Parse>(&self) -> Option<T> {
-        if let &Entry::Value(ref value) = self {
+        if let Entry::Value(value) = self {
             value.to::<T>()
         } else {
             None
@@ -67,7 +67,7 @@ impl Entry {
 
     /// Try to take the entry as a table.
     pub fn as_table(&self) -> Option<&Table> {
-        if let &Entry::Table(ref value) = self {
+        if let Entry::Table(value) = self {
             Some(value)
         } else {
             None
@@ -76,7 +76,7 @@ impl Entry {
 
     /// Try to take the entry as a slice.
     pub fn as_slice(&self) -> Option<&[Entry]> {
-        if let &Entry::Array(ref value) = self {
+        if let Entry::Array(value) = self {
             Some(value.as_slice())
         } else {
             unsafe { Some(slice::from_raw_parts(self, 1)) }
@@ -85,7 +85,7 @@ impl Entry {
 
     /// Try to take the entry as a statement.
     pub fn as_statement(&self) -> Option<&Statement> {
-        if let &Entry::Statement(ref value) = self {
+        if let Entry::Statement(value) = self {
             Some(value)
         } else {
             None
@@ -94,7 +94,7 @@ impl Entry {
 
     /// Try to take the entry as a value.
     pub fn as_value(&self) -> Option<&Value> {
-        if let &Entry::Value(ref value) = self {
+        if let Entry::Value(value) = self {
             Some(value)
         } else {
             None
@@ -104,9 +104,9 @@ impl Entry {
     /// Try to take the entry as a string.
     pub fn as_str(&self) -> Option<&str> {
         match self {
-            &Entry::Value(ref value) => Some(&*value),
+            Entry::Value(value) => Some(value),
 
-            &Entry::Statement(ref value) => Some(&*value),
+            Entry::Statement(value) => Some(value),
 
             _ => None,
         }

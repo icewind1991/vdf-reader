@@ -2,6 +2,7 @@ use super::{Array, Entry};
 use crate::entry::{Statement, Value};
 use crate::{Event, Item, Reader, Result};
 use serde::{Serialize, Serializer};
+use std::collections::hash_map;
 use std::collections::HashMap;
 use std::ops::Deref;
 
@@ -24,20 +25,23 @@ where
 fn insert<K: Into<String>, V: Into<Entry>>(map: &mut HashMap<String, Entry>, key: K, value: V) {
     let key = key.into();
     let value = value.into();
-    if !map.contains_key(&key) {
-        map.insert(key, value);
-        return;
+    let entry = map.entry(key);
+    match entry {
+        hash_map::Entry::Vacant(entry) => {
+            entry.insert(value);
+        }
+        hash_map::Entry::Occupied(mut entry) => match entry.get_mut() {
+            Entry::Array(ref mut array) => {
+                array.push(value);
+            }
+            _ => {
+                let (key, old_value) = entry.remove_entry();
+                let mut array = Array::from(old_value);
+                array.push(value);
+                map.insert(key, Entry::Array(array));
+            }
+        },
     }
-
-    if let Some(&mut Entry::Array(ref mut array)) = map.get_mut(&key) {
-        array.push(value);
-        return;
-    }
-
-    let mut array = Array::from(map.remove(&key).unwrap());
-    array.push(value);
-
-    map.insert(key, array.into());
 }
 
 impl Table {
@@ -65,13 +69,13 @@ impl Table {
             }
         }
 
-        return Ok(Table(map));
+        Ok(Table(map))
     }
 }
 
-impl Into<Entry> for Table {
-    fn into(self) -> Entry {
-        Entry::Table(self)
+impl From<Table> for Entry {
+    fn from(table: Table) -> Self {
+        Entry::Table(table)
     }
 }
 
