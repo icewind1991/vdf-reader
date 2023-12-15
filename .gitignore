@@ -3,3 +3,4 @@ target
 *.obj
 result
 .direnv
+*.snap.new

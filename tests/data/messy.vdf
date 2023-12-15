@@ -1,0 +1,12 @@
+"#base" "panelBase.res"
+
+"Resource/specificPanel.res"
+{
+    // Specify panel-specific controls here
+    empty ""
+    "empty quoted" "\"\""
+    array 1
+    array 2
+    array "3"
+    windows_path "C:\test\no newline"
+}

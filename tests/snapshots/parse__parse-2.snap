@@ -1,0 +1,17 @@
+---
+source: tests/parse.rs
+expression: parsed
+---
+Table({
+  "#base": Statement(Statement("panelBase.res")),
+  "Resource/specificPanel.res": Table(Table({
+    "array": Array(Array([
+      Value(Value("1")),
+      Value(Value("2")),
+      Value(Value("3")),
+    ])),
+    "empty": Value(Value("")),
+    "empty quoted": Value(Value("\"\"")),
+    "windows_path": Value(Value("C:\\test\\no newline")),
+  })),
+})

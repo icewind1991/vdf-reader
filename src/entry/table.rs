@@ -1,5 +1,4 @@
 use super::{Array, Entry, Statement, Value};
-use crate::error::StatementInTableError;
 use crate::{Event, Item, Reader, Result};
 use serde::{Serialize, Serializer};
 use std::collections::HashMap;
@@ -46,25 +45,16 @@ impl Table {
         while let Some(event) = reader.event() {
             match event? {
                 Event::Entry {
-                    key: Item::Statement { .. },
-                    span,
+                    key: Item::Statement { content: key, .. },
+                    value,
                     ..
-                } => {
-                    return Err(
-                        StatementInTableError::new(span.into(), reader.content.into()).into(),
-                    )
-                }
-                Event::Entry {
-                    key: Item::Value { content: key, .. },
-                    value: Item::Statement { content: value, .. },
-                    ..
-                } => insert(&mut map, key.into(), Statement::from(value).into()),
+                } => insert(&mut map, key.into(), Statement::from(value.content).into()),
 
                 Event::Entry {
-                    key: Item::Value { content: key, .. },
-                    value: Item::Value { content: value, .. },
+                    key: Item::Key { content: key, .. },
+                    value,
                     ..
-                } => insert(&mut map, key.into(), Value::from(value).into()),
+                } => insert(&mut map, key.into(), Value::from(value.content).into()),
 
                 Event::GroupStart { name, .. } => {
                     insert(&mut map, name.into(), Table::load(reader)?.into())

@@ -10,23 +10,29 @@ pub enum Item<'a> {
     Statement { content: Cow<'a, str>, span: Span },
 
     /// A value.
-    Value { content: Cow<'a, str>, span: Span },
+    Key { content: Cow<'a, str>, span: Span },
 }
 
 impl<'a> Item<'a> {
     pub fn span(&self) -> Span {
         match self {
             Item::Statement { span, .. } => span.clone(),
-            Item::Value { span, .. } => span.clone(),
+            Item::Key { span, .. } => span.clone(),
         }
     }
 
     pub fn into_content(self) -> Cow<'a, str> {
         match self {
             Item::Statement { content, .. } => content,
-            Item::Value { content, .. } => content,
+            Item::Key { content, .. } => content,
         }
     }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct Value<'a> {
+    pub content: Cow<'a, str>,
+    pub span: Span,
 }
 
 /// Reader event.
@@ -41,7 +47,7 @@ pub enum Event<'a> {
     /// An entry.
     Entry {
         key: Item<'a>,
-        value: Item<'a>,
+        value: Value<'a>,
         span: Span,
     },
 }
@@ -98,12 +104,12 @@ impl<'a> Reader<'a> {
             }
             Some((Ok(Token::GroupEnd), span)) => return Some(Ok(Event::GroupEnd { span })),
 
-            Some((Ok(Token::Item), span)) => Item::Value {
+            Some((Ok(Token::Item), span)) => Item::Key {
                 content: string(self.lexer.slice()),
                 span,
             },
 
-            Some((Ok(Token::QuotedItem), span)) => Item::Value {
+            Some((Ok(Token::QuotedItem), span)) => Item::Key {
                 content: quoted_string(self.lexer.slice()),
                 span,
             },
@@ -158,12 +164,12 @@ impl<'a> Reader<'a> {
                 }))
             }
 
-            Some((Ok(Token::QuotedItem), span)) => Item::Value {
+            Some((Ok(Token::QuotedItem), span)) => Value {
                 content: quoted_string(self.lexer.slice()),
                 span,
             },
 
-            Some((Ok(Token::Item), span)) => Item::Value {
+            Some((Ok(Token::Item), span)) => Value {
                 content: string(self.lexer.slice()),
                 span,
             },
@@ -179,7 +185,7 @@ impl<'a> Reader<'a> {
             }
         };
 
-        let span = key.span().start..value.span().end;
+        let span = key.span().start..value.span.end;
         Some(Ok(Event::Entry { key, value, span }))
     }
 }

@@ -21,16 +21,16 @@ pub enum Token {
     Item,
     /// An enclosed or bare item.
     #[regex("\"([^\"\\\\]|\\\\.)*\"")]
-    #[display("item")]
+    #[display("quoted item")]
     QuotedItem,
-    /// An enclosed or bare statement.
-    #[regex("\"#([^\"\\\\]|\\\\.)*\"")]
-    #[display("statement")]
-    QuotedStatement,
     /// An enclosed or bare statement.
     #[regex("#[^ \"\t\n]+")]
     #[display("statement")]
     Statement,
+    /// An enclosed or bare statement.
+    #[regex("\"#([^\"\\\\]|\\\\.)*\"")]
+    #[display("quoted statement")]
+    QuotedStatement,
 }
 
 #[cfg(test)]

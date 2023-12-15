@@ -15,10 +15,6 @@ pub enum VdfError {
     #[diagnostic(transparent)]
     /// No valid token found
     NoValidToken(#[from] NoValidTokenError),
-    #[error(transparent)]
-    #[diagnostic(transparent)]
-    /// An unexpected statement was found inside a table
-    StatementInTable(#[from] StatementInTableError),
 }
 
 struct ExpectedTokens<'a>(&'a [Token]);
@@ -53,12 +49,17 @@ pub struct UnexpectedTokenError {
 }
 
 impl UnexpectedTokenError {
-    pub fn new(expected: &'static [Token], found: Option<Token>, err_span: SourceSpan, src: String) -> Self {
+    pub fn new(
+        expected: &'static [Token],
+        found: Option<Token>,
+        err_span: SourceSpan,
+        src: String,
+    ) -> Self {
         UnexpectedTokenError {
             err_span,
             expected,
             found,
-            src
+            src,
         }
     }
 }
@@ -96,7 +97,11 @@ pub struct NoValidTokenError {
 
 impl NoValidTokenError {
     pub fn new(expected: &'static [Token], err_span: SourceSpan, src: String) -> Self {
-        NoValidTokenError { err_span, expected ,src }
+        NoValidTokenError {
+            err_span,
+            expected,
+            src,
+        }
     }
 }
 
@@ -111,19 +116,3 @@ impl Display for NoValidTokenError {
 }
 
 impl Error for NoValidTokenError {}
-
-/// An unexpected statement was found inside a table
-#[derive(Debug, Clone, Diagnostic, Error)]
-#[diagnostic(code(php_literal_parser::unexpected_token))]
-#[error("An unexpected statement was found inside a table")]
-pub struct StatementInTableError {
-    #[label("Unexpected statement")]
-    err_span: SourceSpan,
-    #[source_code]
-    src: String,
-}
-impl StatementInTableError {
-    pub fn new(err_span: SourceSpan, src: String) -> Self {
-        StatementInTableError { err_span, src }
-    }
-}
