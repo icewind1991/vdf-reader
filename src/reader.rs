@@ -1,65 +1,12 @@
 use super::{Result, Token};
 use crate::error::{NoValidTokenError, UnexpectedTokenError};
+use crate::event::{EntryEvent, Event, GroupEndEvent, GroupStartEvent, Item};
 use logos::{Lexer, Logos, Span, SpannedIter};
 use std::borrow::Cow;
 
-/// Kinds of item.
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub enum Item<'a> {
-    /// A statement, the ones starting with #.
-    Statement { content: Cow<'a, str>, span: Span },
-
-    /// A value.
-    Item { content: Cow<'a, str>, span: Span },
-}
-
-impl<'a> Item<'a> {
-    pub fn span(&self) -> Span {
-        match self {
-            Item::Statement { span, .. } => span.clone(),
-            Item::Item { span, .. } => span.clone(),
-        }
-    }
-
-    pub fn into_content(self) -> Cow<'a, str> {
-        match self {
-            Item::Statement { content, .. } => content,
-            Item::Item { content, .. } => content,
-        }
-    }
-}
-
-/// Reader event.
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub enum Event<'a> {
-    /// A group with the given name is starting.
-    GroupStart { name: Cow<'a, str>, span: Span },
-
-    /// A group has ended.
-    GroupEnd { span: Span },
-
-    /// An entry.
-    Entry {
-        key: Item<'a>,
-        value: Item<'a>,
-        span: Span,
-    },
-}
-
-impl Event<'_> {
-    #[allow(dead_code)]
-    pub fn span(&self) -> Span {
-        match self {
-            Event::GroupStart { span, .. } => span.clone(),
-            Event::GroupEnd { span, .. } => span.clone(),
-            Event::Entry { span, .. } => span.clone(),
-        }
-    }
-}
-
 /// A VDF token reader.
 pub struct Reader<'a> {
-    pub(crate) content: &'a str,
+    pub source: &'a str,
     lexer: SpannedIter<'a, Token>,
     peeked: Option<(Result<Token, <Token as Logos<'a>>::Error>, Span)>,
 }
@@ -67,7 +14,7 @@ pub struct Reader<'a> {
 impl<'a> From<&'a str> for Reader<'a> {
     fn from(content: &'a str) -> Self {
         Reader {
-            content,
+            source: content,
             lexer: Lexer::new(content).spanned(),
             peeked: None,
         }
@@ -88,6 +35,10 @@ impl<'a> Reader<'a> {
             self.peeked = self.lexer.next();
         }
         self.peeked.clone()
+    }
+
+    pub fn span(&self) -> Span {
+        self.lexer.span()
     }
 
     fn token_eat_newlines(&mut self) -> Option<(Result<Token, <Token as Logos>::Error>, Span)> {
@@ -122,11 +73,13 @@ impl<'a> Reader<'a> {
                 return Some(Err(NoValidTokenError::new(
                     VALID_KEY,
                     span.into(),
-                    self.content.into(),
+                    self.source.into(),
                 )
                 .into()));
             }
-            Some((Ok(Token::GroupEnd), span)) => return Some(Ok(Event::GroupEnd { span })),
+            Some((Ok(Token::GroupEnd), span)) => {
+                return Some(Ok(Event::GroupEnd(GroupEndEvent { span })))
+            }
 
             Some((Ok(Token::Item), span)) => Item::Item {
                 content: string(self.lexer.slice()),
@@ -153,7 +106,7 @@ impl<'a> Reader<'a> {
                     VALID_KEY,
                     Some(token),
                     span.into(),
-                    self.content.into(),
+                    self.source.into(),
                 )
                 .into()))
             }
@@ -175,7 +128,7 @@ impl<'a> Reader<'a> {
                             &[Token::GroupStart],
                             Some(token),
                             span.into(),
-                            self.content.into(),
+                            self.source.into(),
                         )
                         .into()))
                     }
@@ -183,7 +136,7 @@ impl<'a> Reader<'a> {
                         return Some(Err(NoValidTokenError::new(
                             VALID_VALUE,
                             span.into(),
-                            self.content.into(),
+                            self.source.into(),
                         )
                         .into()));
                     }
@@ -192,7 +145,7 @@ impl<'a> Reader<'a> {
                             VALID_VALUE,
                             None,
                             span.into(),
-                            self.content.into(),
+                            self.source.into(),
                         )
                         .into()))
                     }
@@ -206,7 +159,7 @@ impl<'a> Reader<'a> {
                     VALID_VALUE,
                     None,
                     self.lexer.span().into(),
-                    self.content.into(),
+                    self.source.into(),
                 )
                 .into()));
             }
@@ -215,16 +168,16 @@ impl<'a> Reader<'a> {
                 return Some(Err(NoValidTokenError::new(
                     VALID_VALUE,
                     span.into(),
-                    self.content.into(),
+                    self.source.into(),
                 )
                 .into()));
             }
 
             Some((Ok(Token::GroupStart), span)) => {
-                return Some(Ok(Event::GroupStart {
+                return Some(Ok(Event::GroupStart(GroupStartEvent {
                     name: key.into_content(),
                     span,
-                }))
+                })))
             }
 
             Some((Ok(Token::QuotedItem), span)) => Item::Item {
@@ -252,14 +205,14 @@ impl<'a> Reader<'a> {
                     VALID_VALUE,
                     Some(token),
                     span.into(),
-                    self.content.into(),
+                    self.source.into(),
                 )
                 .into()))
             }
         };
 
         let span = key.span().start..value.span().end;
-        Some(Ok(Event::Entry { key, value, span }))
+        Some(Ok(Event::Entry(EntryEvent { key, value, span })))
     }
 }
 

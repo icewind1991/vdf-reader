@@ -1,5 +1,6 @@
 use super::{Array, Entry};
 use crate::entry::{Statement, Value};
+use crate::event::{EntryEvent, GroupStartEvent};
 use crate::{Event, Item, Reader, Result};
 use serde::{Serialize, Serializer};
 use std::collections::hash_map;
@@ -51,21 +52,23 @@ impl Table {
 
         while let Some(event) = reader.event() {
             match event? {
-                Event::Entry {
+                Event::Entry(EntryEvent {
                     key: Item::Item { content: key, .. },
                     value,
                     ..
-                } => insert(&mut map, key, Value::from(value.into_content())),
+                }) => insert(&mut map, key, Value::from(value.into_content())),
 
-                Event::Entry {
+                Event::Entry(EntryEvent {
                     key: Item::Statement { content: key, .. },
                     value,
                     ..
-                } => insert(&mut map, key, Statement::from(value.into_content())),
+                }) => insert(&mut map, key, Statement::from(value.into_content())),
 
-                Event::GroupStart { name, .. } => insert(&mut map, name, Table::load(reader)?),
+                Event::GroupStart(GroupStartEvent { name, .. }) => {
+                    insert(&mut map, name, Table::load(reader)?)
+                }
 
-                Event::GroupEnd { .. } => break,
+                Event::GroupEnd(_) => break,
             }
         }
 
