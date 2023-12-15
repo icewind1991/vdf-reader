@@ -1,13 +1,25 @@
 use super::{Array, Entry, Statement, Value};
 use crate::error::StatementInTableError;
 use crate::{Event, Item, Reader, Result};
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use std::collections::HashMap;
 use std::ops::Deref;
 
 /// A table of entries.
 #[derive(Clone, PartialEq, Eq, Debug, Serialize)]
-pub struct Table(HashMap<String, Entry>);
+pub struct Table(#[serde(serialize_with = "ordered_map")] HashMap<String, Entry>);
+
+fn ordered_map<S, K: Ord + Serialize, V: Serialize>(
+    value: &HashMap<K, V>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    use std::collections::BTreeMap;
+    let ordered: BTreeMap<_, _> = value.iter().collect();
+    ordered.serialize(serializer)
+}
 
 fn insert(map: &mut HashMap<String, Entry>, key: String, value: Entry) {
     if !map.contains_key(&key) {
