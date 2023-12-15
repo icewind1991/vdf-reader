@@ -1,0 +1,16 @@
+[package]
+name = "vdf-reader"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+logos = "0.13.0"
+thiserror = "1.0.50"
+miette = "5.10.0"
+parse-display = "0.8.2"
+serde = { version = "1.0.193", features = ["derive"] }
+
+[dev-dependencies]
+test-case = "3.3.1"
+insta = { version = "1.34.0", features = ["ron"] }
+miette = { version = "5.10.0", features = ["fancy"] }
