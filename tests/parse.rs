@@ -9,6 +9,8 @@ use vdf_reader::Reader;
 fn test_parse(path: &str) {
     let raw = read_to_string(path).unwrap();
     let mut reader = Reader::from(raw.as_str());
-    let parsed = Table::load(&mut reader).expect("failed to parse test data");
+    let parsed = Table::load(&mut reader)
+        .map_err(miette::Error::from)
+        .expect("failed to parse test data");
     insta::assert_ron_snapshot!(path, parsed);
 }
