@@ -1,4 +1,5 @@
-use super::{Array, Entry, Statement, Value};
+use super::{Array, Entry};
+use crate::entry::{Statement, Value};
 use crate::{Event, Item, Reader, Result};
 use serde::{Serialize, Serializer};
 use std::collections::HashMap;
@@ -20,7 +21,9 @@ where
     ordered.serialize(serializer)
 }
 
-fn insert(map: &mut HashMap<String, Entry>, key: String, value: Entry) {
+fn insert<K: Into<String>, V: Into<Entry>>(map: &mut HashMap<String, Entry>, key: K, value: V) {
+    let key = key.into();
+    let value = value.into();
     if !map.contains_key(&key) {
         map.insert(key, value);
         return;
@@ -45,20 +48,18 @@ impl Table {
         while let Some(event) = reader.event() {
             match event? {
                 Event::Entry {
+                    key: Item::Item { content: key, .. },
+                    value,
+                    ..
+                } => insert(&mut map, key, Value::from(value.into_content())),
+
+                Event::Entry {
                     key: Item::Statement { content: key, .. },
                     value,
                     ..
-                } => insert(&mut map, key.into(), Statement::from(value.content).into()),
+                } => insert(&mut map, key, Statement::from(value.into_content())),
 
-                Event::Entry {
-                    key: Item::Key { content: key, .. },
-                    value,
-                    ..
-                } => insert(&mut map, key.into(), Value::from(value.content).into()),
-
-                Event::GroupStart { name, .. } => {
-                    insert(&mut map, name.into(), Table::load(reader)?.into())
-                }
+                Event::GroupStart { name, .. } => insert(&mut map, name, Table::load(reader)?),
 
                 Event::GroupEnd { .. } => break,
             }

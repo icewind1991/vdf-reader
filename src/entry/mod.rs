@@ -16,6 +16,15 @@ pub enum Entry {
     Value(Value),
 }
 
+impl From<Item<'_>> for Entry {
+    fn from(item: Item) -> Self {
+        match item {
+            Item::Item { content, .. } => Entry::Value(content.into()),
+            Item::Statement { content, .. } => Entry::Statement(content.into()),
+        }
+    }
+}
+
 impl Entry {
     /// Lookup an entry with a path.
     pub fn lookup<S: AsRef<str>>(&self, path: S) -> Option<&Entry> {
@@ -152,4 +161,5 @@ mod statement;
 pub use statement::Statement;
 
 mod value;
+use crate::Item;
 pub use value::Value;
