@@ -1,5 +1,5 @@
 pub mod entry;
-mod error;
+pub mod error;
 mod event;
 mod parser;
 mod reader;

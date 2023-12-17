@@ -13,21 +13,6 @@ pub enum Item<'a> {
     Item { content: Cow<'a, str>, span: Span },
 }
 
-impl Item<'_> {
-    pub fn into_owned(self) -> Item<'static> {
-        match self {
-            Item::Statement { content, span } => Item::Statement {
-                content: content.into_owned().into(),
-                span,
-            },
-            Item::Item { content, span } => Item::Item {
-                content: content.into_owned().into(),
-                span,
-            },
-        }
-    }
-}
-
 impl<'a> Item<'a> {
     pub fn span(&self) -> Span {
         match self {
@@ -40,6 +25,26 @@ impl<'a> Item<'a> {
         match self {
             Item::Statement { content, .. } => content,
             Item::Item { content, .. } => content,
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        match self {
+            Item::Statement { content, .. } => content.as_ref(),
+            Item::Item { content, .. } => content.as_ref(),
+        }
+    }
+
+    pub fn into_owned(self) -> Item<'static> {
+        match self {
+            Item::Statement { content, span } => Item::Statement {
+                content: content.into_owned().into(),
+                span,
+            },
+            Item::Item { content, span } => Item::Item {
+                content: content.into_owned().into(),
+                span,
+            },
         }
     }
 }

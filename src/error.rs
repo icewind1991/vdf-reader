@@ -1,4 +1,5 @@
-use crate::{Event, Token};
+use crate::entry::Entry;
+use crate::{Event, Item, Token};
 use miette::{Diagnostic, SourceSpan};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
@@ -19,6 +20,14 @@ pub enum VdfError {
     #[diagnostic(transparent)]
     /// Wrong event to for conversion
     WrongEntryType(#[from] WrongEventTypeError),
+    #[error(transparent)]
+    #[diagnostic(transparent)]
+    /// Failed to parse entry into type
+    ParseEntry(#[from] ParseEntryError),
+    #[error(transparent)]
+    #[diagnostic(transparent)]
+    /// Failed to parse item into type
+    ParseItem(#[from] ParseItemError),
 }
 
 struct ExpectedTokens<'a>(&'a [Token]);
@@ -134,8 +143,53 @@ impl WrongEventTypeError {
             src: String::new(),
         }
     }
+    pub fn new_with_source(
+        event: Event,
+        expected: &'static str,
+        got: &'static str,
+        src: String,
+    ) -> Self {
+        WrongEventTypeError {
+            err_span: event.span().into(),
+            event: event.into_owned(),
+            expected,
+            got,
+            src,
+        }
+    }
 
     pub fn with_source(self, src: String) -> Self {
         WrongEventTypeError { src, ..self }
+    }
+}
+
+#[derive(Debug, Clone, Error, Diagnostic)]
+#[error("Can't parse entry {value:?} as {ty}")]
+#[diagnostic(code(vmt_parser::eof))]
+pub struct ParseEntryError {
+    pub ty: &'static str,
+    pub value: Entry,
+}
+
+impl ParseEntryError {
+    pub fn new(ty: &'static str, value: Entry) -> Self {
+        ParseEntryError { ty, value }
+    }
+}
+
+#[derive(Debug, Clone, Error, Diagnostic)]
+#[error("Can't parse entry {value:?} as {ty}")]
+#[diagnostic(code(vmt_parser::eof))]
+pub struct ParseItemError {
+    pub ty: &'static str,
+    pub value: Item<'static>,
+}
+
+impl ParseItemError {
+    pub fn new(ty: &'static str, value: Item) -> Self {
+        ParseItemError {
+            ty,
+            value: value.into_owned(),
+        }
     }
 }

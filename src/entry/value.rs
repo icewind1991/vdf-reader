@@ -1,4 +1,4 @@
-use super::{Entry, Parse};
+use super::Entry;
 use serde::Serialize;
 use std::borrow::Cow;
 use std::ops::Deref;
@@ -18,17 +18,16 @@ impl From<Value> for Entry {
     }
 }
 
+impl From<Value> for String {
+    fn from(value: Value) -> Self {
+        value.0
+    }
+}
+
 impl Deref for Value {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
         &self.0
-    }
-}
-
-impl Value {
-    /// Try to convert the value to the given type.
-    pub fn to<T: Parse>(&self) -> Option<T> {
-        T::parse(&self.0)
     }
 }

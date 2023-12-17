@@ -19,6 +19,12 @@ impl From<Statement> for Entry {
     }
 }
 
+impl From<Statement> for String {
+    fn from(value: Statement) -> Self {
+        value.0
+    }
+}
+
 impl Deref for Statement {
     type Target = str;
 

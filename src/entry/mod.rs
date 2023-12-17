@@ -1,4 +1,16 @@
+mod array;
+mod statement;
+mod table;
+mod value;
+
+use crate::error::{ParseEntryError, ParseItemError};
+use crate::Item;
+pub use array::Array;
+pub use statement::Statement;
+use std::any::type_name;
 use std::slice;
+pub use table::Table;
+pub use value::Value;
 
 /// The kinds of entry.
 #[derive(Clone, PartialEq, Eq, Debug, Serialize)]
@@ -57,12 +69,8 @@ impl Entry {
     }
 
     /// Try to convert the entry to the given type.
-    pub fn to<T: Parse>(&self) -> Option<T> {
-        if let Entry::Value(value) = self {
-            value.to::<T>()
-        } else {
-            None
-        }
+    pub fn to<T: ParseItem>(self) -> Result<T, ParseEntryError> {
+        T::from_entry(self)
     }
 
     /// Try to take the entry as a table.
@@ -114,9 +122,12 @@ impl Entry {
 }
 
 /// Parsable types.
-pub trait Parse: Sized {
-    /// Try to parse the string.
-    fn parse(string: &str) -> Option<Self>;
+pub trait ParseItem: Sized {
+    /// Try to cast the entry into a concrete type
+    fn from_entry(entry: Entry) -> Result<Self, ParseEntryError>;
+
+    /// Try to cast the item into a concrete type
+    fn from_item(item: Item) -> Result<Self, ParseItemError>;
 }
 
 macro_rules! from_str {
@@ -128,10 +139,20 @@ macro_rules! from_str {
 	);
 
 	($ty:ident) => (
-		impl Parse for $ty {
-			fn parse(string: &str) -> Option<Self> {
-				string.parse::<$ty>().ok()
+		impl ParseItem for $ty {
+			fn from_entry(entry: Entry) -> Result<Self, ParseEntryError> {
+                let string = match entry.as_str() {
+                    Some(string) => string,
+                    None => {
+                        return Err(ParseEntryError::new(type_name::<Self>(), entry));
+                    }
+                };
+				string.parse::<$ty>().map_err(|_| ParseEntryError::new(type_name::<Self>(), entry))
 			}
+
+            fn from_item(item: Item) -> Result<Self, ParseItemError> {
+                item.as_str().parse::<$ty>().map_err(|_| ParseItemError::new(type_name::<Self>(), item))
+            }
 		}
 	);
 }
@@ -141,25 +162,61 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV
 from_str!(for IpAddr Ipv4Addr Ipv6Addr SocketAddr SocketAddrV4 SocketAddrV6);
 from_str!(for i8 i16 i32 i64 isize u8 u16 u32 u64 usize f32 f64);
 
-impl Parse for bool {
-    fn parse(string: &str) -> Option<Self> {
+impl ParseItem for bool {
+    fn from_entry(entry: Entry) -> Result<Self, ParseEntryError> {
+        let string = match entry.as_str() {
+            Some(string) => string,
+            None => {
+                return Err(ParseEntryError::new(type_name::<Self>(), entry));
+            }
+        };
         match string {
-            "0" => Some(false),
-            "1" => Some(true),
-            v => v.parse::<bool>().ok(),
+            "0" => Ok(false),
+            "1" => Ok(true),
+            v => v
+                .parse::<bool>()
+                .map_err(|_| ParseEntryError::new(type_name::<Self>(), entry)),
+        }
+    }
+
+    fn from_item(item: Item) -> Result<Self, ParseItemError> {
+        match item.as_str() {
+            "0" => Ok(false),
+            "1" => Ok(true),
+            v => v
+                .parse::<bool>()
+                .map_err(|_| ParseItemError::new(type_name::<Self>(), item)),
         }
     }
 }
 
-mod table;
-pub use table::Table;
+impl ParseItem for String {
+    fn from_entry(entry: Entry) -> Result<Self, ParseEntryError> {
+        match entry {
+            Entry::Table(entry) => Err(ParseEntryError::new(
+                type_name::<Self>(),
+                Entry::Table(entry),
+            )),
+            Entry::Array(entry) => Err(ParseEntryError::new(
+                type_name::<Self>(),
+                Entry::Array(entry),
+            )),
+            Entry::Statement(statement) => Ok(statement.into()),
+            Entry::Value(value) => Ok(value.into()),
+        }
+    }
 
-mod array;
-pub use array::Array;
+    fn from_item(item: Item) -> Result<Self, ParseItemError> {
+        Ok(item.into_content().into())
+    }
+}
 
-mod statement;
-pub use statement::Statement;
+impl<T: ParseItem> ParseItem for Option<T> {
+    fn from_entry(entry: Entry) -> Result<Self, ParseEntryError> {
+        T::from_entry(entry).map(Some)
+    }
 
-mod value;
-use crate::Item;
-pub use value::Value;
+    fn from_item(item: Item) -> Result<Self, ParseItemError> {
+        T::from_item(item).map(Some)
+    }
+}
