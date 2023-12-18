@@ -3,14 +3,14 @@ source: tests/parse.rs
 expression: parsed
 ---
 Table({
-  "LightmappedGeneric": Table(Table({
-    "$baseTexture": Value(Value("cp_mountainlab/concrete/concretefloor003")),
-    "$bumpmap": Value(Value("concrete/concretefloor007b_height-ssbump")),
-    "$detail": Value(Value("overlays/detail001")),
-    "$detailblendfactor": Value(Value("1")),
-    "$detailblendmode": Value(Value("0")),
-    "$detailscale": Value(Value("1.9")),
-    "$ssbump": Value(Value("1")),
-    "%keywords": Value(Value("tf")),
-  })),
+  "LightmappedGeneric": Table({
+    "$baseTexture": Value("cp_mountainlab/concrete/concretefloor003"),
+    "$bumpmap": Value("concrete/concretefloor007b_height-ssbump"),
+    "$detail": Value("overlays/detail001"),
+    "$detailblendfactor": Value("1"),
+    "$detailblendmode": Value("0"),
+    "$detailscale": Value("1.9"),
+    "$ssbump": Value("1"),
+    "%keywords": Value("tf"),
+  }),
 })

@@ -3,17 +3,17 @@ source: tests/parse.rs
 expression: parsed
 ---
 Table({
-  "Resource/specificPanel.res": Table(Table({
-    "$envmaptint": Value(Value(".5")),
-    ".5": Value(Value(".5")),
-    "\\\\\"$translucent\"": Value(Value("1")),
-    "array": Array(Array([
-      Value(Value("1")),
-      Value(Value("2")),
-      Value(Value("3")),
-    ])),
-    "empty": Value(Value("")),
-    "empty quoted": Value(Value("\"\"")),
-    "windows_path": Value(Value("C:\\test\\no newline")),
-  })),
+  "Resource/specificPanel.res": Table({
+    "$envmaptint": Value(".5"),
+    ".5": Value(".5"),
+    "\\\\\"$translucent\"": Value("1"),
+    "array": Array([
+      Value("1"),
+      Value("2"),
+      Value("3"),
+    ]),
+    "empty": Value(""),
+    "empty quoted": Value("\"\""),
+    "windows_path": Value("C:\\test\\no newline"),
+  }),
 })
