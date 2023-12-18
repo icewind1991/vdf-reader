@@ -13,6 +13,7 @@ pub struct Deserializer<'de> {
     tokenizer: Tokenizer<'de>,
     peeked: Option<Result<SpannedToken, Span>>,
     last_key: Cow<'de, str>,
+    last_span: Span,
 }
 
 const STRING_ITEMS: &[Token] = &[
@@ -28,6 +29,7 @@ impl<'de> Deserializer<'de> {
             tokenizer: Tokenizer::from_str(input),
             peeked: None,
             last_key: "".into(),
+            last_span: 0..0,
         }
     }
 
@@ -36,7 +38,19 @@ impl<'de> Deserializer<'de> {
     }
 
     pub fn next(&mut self) -> Option<Result<SpannedToken, Span>> {
-        self.peeked.take().or_else(|| self.tokenizer.next())
+        self.peeked
+            .take()
+            .or_else(|| self.tokenizer.next())
+            .map(|r| {
+                r.map(|t| {
+                    self.last_span = t.span.clone();
+                    t
+                })
+                .map_err(|span| {
+                    self.last_span = span.clone();
+                    span
+                })
+            })
     }
 
     pub fn peek(&mut self) -> Option<Result<SpannedToken, Span>> {
@@ -513,9 +527,10 @@ impl<'de, 'a> MapAccess<'de> for TableWalker<'de, 'a> {
     where
         V: DeserializeSeed<'de>,
     {
-        if let Some(span) = self.de.peek_span() {
-            seed.deserialize(&mut *self.de)
-                .ensure_span(span, self.source())
+        if let Some(start_span) = self.de.peek_span() {
+            let res = seed.deserialize(&mut *self.de);
+            let span = start_span.start..self.de.last_span.end;
+            res.ensure_span(span, self.source())
         } else {
             seed.deserialize(&mut *self.de)
         }
