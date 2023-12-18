@@ -1,0 +1,16 @@
+---
+source: tests/serde.rs
+expression: result
+---
+r#Resource/specificPanel.res(
+  empty: (),
+  array: [
+    1,
+    2,
+    3,
+  ],
+  windows_path: "C:\\test\\no newline",
+  r#\\"$translucent": true,
+  r#$envmaptint: 0.5,
+  r#.5: 0.5,
+)

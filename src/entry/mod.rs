@@ -3,7 +3,7 @@ mod statement;
 mod table;
 mod value;
 
-use crate::error::{ParseEntryError, ParseItemError};
+use crate::error::{ParseEntryError, ParseItemError, ParseStringError};
 use crate::Item;
 pub use array::Array;
 pub use statement::Statement;
@@ -124,10 +124,23 @@ impl Entry {
 /// Parsable types.
 pub trait ParseItem: Sized {
     /// Try to cast the entry into a concrete type
-    fn from_entry(entry: Entry) -> Result<Self, ParseEntryError>;
+    fn from_entry(entry: Entry) -> Result<Self, ParseEntryError> {
+        let string = match entry.as_str() {
+            Some(string) => string,
+            None => {
+                return Err(ParseEntryError::new(type_name::<Self>(), entry));
+            }
+        };
+        Self::from_str(string).map_err(|e| ParseEntryError::new(e.ty, entry))
+    }
 
     /// Try to cast the item into a concrete type
-    fn from_item(item: Item) -> Result<Self, ParseItemError>;
+    fn from_item(item: Item) -> Result<Self, ParseItemError> {
+        Self::from_str(item.as_str()).map_err(|e| ParseItemError::new(e.ty, item))
+    }
+
+    /// Try to cast the string into a concrete type
+    fn from_str(item: &str) -> Result<Self, ParseStringError>;
 }
 
 macro_rules! from_str {
@@ -153,6 +166,10 @@ macro_rules! from_str {
             fn from_item(item: Item) -> Result<Self, ParseItemError> {
                 item.as_str().parse::<$ty>().map_err(|_| ParseItemError::new(type_name::<Self>(), item))
             }
+
+            fn from_str(item: &str) -> Result<Self, ParseStringError> {
+                item.parse::<$ty>().map_err(|_| ParseStringError::new(type_name::<Self>(), item))
+            }
 		}
 	);
 }
@@ -163,29 +180,13 @@ from_str!(for IpAddr Ipv4Addr Ipv6Addr SocketAddr SocketAddrV4 SocketAddrV6);
 from_str!(for i8 i16 i32 i64 isize u8 u16 u32 u64 usize f32 f64);
 
 impl ParseItem for bool {
-    fn from_entry(entry: Entry) -> Result<Self, ParseEntryError> {
-        let string = match entry.as_str() {
-            Some(string) => string,
-            None => {
-                return Err(ParseEntryError::new(type_name::<Self>(), entry));
-            }
-        };
-        match string {
+    fn from_str(item: &str) -> Result<Self, ParseStringError> {
+        match item {
             "0" => Ok(false),
             "1" => Ok(true),
             v => v
                 .parse::<bool>()
-                .map_err(|_| ParseEntryError::new(type_name::<Self>(), entry)),
-        }
-    }
-
-    fn from_item(item: Item) -> Result<Self, ParseItemError> {
-        match item.as_str() {
-            "0" => Ok(false),
-            "1" => Ok(true),
-            v => v
-                .parse::<bool>()
-                .map_err(|_| ParseItemError::new(type_name::<Self>(), item)),
+                .map_err(|_| ParseStringError::new(type_name::<Self>(), item)),
         }
     }
 }
@@ -209,6 +210,10 @@ impl ParseItem for String {
     fn from_item(item: Item) -> Result<Self, ParseItemError> {
         Ok(item.into_content().into())
     }
+
+    fn from_str(item: &str) -> Result<Self, ParseStringError> {
+        Ok(item.into())
+    }
 }
 
 impl<T: ParseItem> ParseItem for Option<T> {
@@ -218,5 +223,9 @@ impl<T: ParseItem> ParseItem for Option<T> {
 
     fn from_item(item: Item) -> Result<Self, ParseItemError> {
         T::from_item(item).map(Some)
+    }
+
+    fn from_str(item: &str) -> Result<Self, ParseStringError> {
+        T::from_str(item).map(Some)
     }
 }

@@ -3,11 +3,10 @@ source: tests/parse.rs
 expression: parsed
 ---
 Table({
-  "#base": Statement(Statement("panelBase.res")),
   "Resource/specificPanel.res": Table(Table({
     "$envmaptint": Value(Value(".5")),
     ".5": Value(Value(".5")),
-    "\\\"$translucent\"": Value(Value("1")),
+    "\\\\\"$translucent\"": Value(Value("1")),
     "array": Array(Array([
       Value(Value("1")),
       Value(Value("2")),

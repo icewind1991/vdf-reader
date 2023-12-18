@@ -1,0 +1,14 @@
+---
+source: tests/serde.rs
+expression: result
+---
+LightmappedGeneric(
+  r#$baseTexture: "cp_mountainlab/concrete/concretefloor003",
+  r#$bumpmap: "concrete/concretefloor007b_height-ssbump",
+  r#$ssbump: true,
+  r#%keywords: "tf",
+  r#$detail: "overlays/detail001",
+  r#$detailscale: 1.9,
+  r#$detailblendmode: 0,
+  r#$detailblendfactor: 1.0,
+)

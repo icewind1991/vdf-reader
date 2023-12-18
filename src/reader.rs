@@ -41,19 +41,6 @@ impl<'a> Reader<'a> {
         self.lexer.span()
     }
 
-    fn token_eat_newlines(&mut self) -> Option<(Result<Token, <Token as Logos>::Error>, Span)> {
-        loop {
-            let (token, span) = self.token()?;
-            match token {
-                Err(e) => return Some((Err(e), span)),
-                Ok(Token::NewLine) => {
-                    continue;
-                }
-                Ok(token) => return Some((Ok(token), span)),
-            }
-        }
-    }
-
     /// Get the next event, this does copies.
     #[allow(dead_code)]
     pub fn event(&mut self) -> Option<Result<Event<'a>>> {
@@ -65,7 +52,7 @@ impl<'a> Reader<'a> {
             Token::QuotedStatement,
         ];
 
-        let key = match self.token_eat_newlines() {
+        let key = match self.token() {
             None => {
                 return None;
             }
@@ -112,46 +99,13 @@ impl<'a> Reader<'a> {
             }
         };
 
-        const VALID_VALUE: &[Token] = &[Token::Item, Token::QuotedItem, Token::GroupStart];
-
-        // only a group start is allowed to have newlines between the key and value
-        while matches!(self.peek(), Some((Ok(Token::NewLine), _))) {
-            let _newline = self.token();
-            if !matches!(
-                self.peek(),
-                Some((Ok(Token::GroupStart | Token::NewLine), _))
-            ) {
-                let span = key.span().end..key.span().end;
-                match self.peeked.clone() {
-                    Some((Ok(token), _)) => {
-                        return Some(Err(UnexpectedTokenError::new(
-                            &[Token::GroupStart],
-                            Some(token),
-                            span.into(),
-                            self.source.into(),
-                        )
-                        .into()))
-                    }
-                    Some((Err(_), _)) => {
-                        return Some(Err(NoValidTokenError::new(
-                            VALID_VALUE,
-                            span.into(),
-                            self.source.into(),
-                        )
-                        .into()));
-                    }
-                    None => {
-                        return Some(Err(UnexpectedTokenError::new(
-                            VALID_VALUE,
-                            None,
-                            span.into(),
-                            self.source.into(),
-                        )
-                        .into()))
-                    }
-                }
-            }
-        }
+        const VALID_VALUE: &[Token] = &[
+            Token::Item,
+            Token::QuotedItem,
+            Token::GroupStart,
+            Token::Statement,
+            Token::QuotedStatement,
+        ];
 
         let value = match self.token() {
             None => {
@@ -224,11 +178,9 @@ impl<'a> Iterator for Reader<'a> {
     }
 }
 
-fn quoted_string(source: &str) -> Cow<str> {
-    string(&source[1..source.len() - 1])
-}
+pub(crate) fn quoted_string(source: &str) -> Cow<str> {
+    let source = &source[1..source.len() - 1];
 
-fn string(source: &str) -> Cow<str> {
     if source.contains(r#"\""#) || source.contains(r#"\\"#) {
         let mut buffer = source.bytes();
         let mut string = Vec::with_capacity(buffer.len());
@@ -250,4 +202,8 @@ fn string(source: &str) -> Cow<str> {
     } else {
         source.into()
     }
+}
+
+fn string(source: &str) -> Cow<str> {
+    source.into()
 }

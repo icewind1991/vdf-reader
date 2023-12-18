@@ -1,5 +1,7 @@
 use crate::entry::Entry;
+use crate::tokenizer::SpannedToken;
 use crate::{Event, Item, Token};
+use logos::Span;
 use miette::{Diagnostic, SourceSpan};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
@@ -28,6 +30,12 @@ pub enum VdfError {
     #[diagnostic(transparent)]
     /// Failed to parse item into type
     ParseItem(#[from] ParseItemError),
+    #[error(transparent)]
+    #[diagnostic(transparent)]
+    /// Failed to parse string into type
+    ParseString(#[from] ParseStringError),
+    #[error("{0}")]
+    Other(String),
 }
 
 struct ExpectedTokens<'a>(&'a [Token]);
@@ -191,5 +199,84 @@ impl ParseItemError {
             ty,
             value: value.into_owned(),
         }
+    }
+}
+
+#[derive(Debug, Clone, Error, Diagnostic)]
+#[error("Can't parse entry {value:?} as {ty}")]
+#[diagnostic(code(vmt_parser::eof))]
+pub struct ParseStringError {
+    pub ty: &'static str,
+    pub value: String,
+}
+
+impl ParseStringError {
+    pub fn new(ty: &'static str, value: &str) -> Self {
+        ParseStringError {
+            ty,
+            value: value.into(),
+        }
+    }
+}
+
+pub trait ExpectToken<'source> {
+    fn expect_token(
+        self,
+        expected: &'static [Token],
+        source: &'source str,
+    ) -> Result<SpannedToken, VdfError>;
+}
+
+impl<'source, T: ExpectToken<'source>> ExpectToken<'source> for Option<T> {
+    fn expect_token(
+        self,
+        expected: &'static [Token],
+        source: &'source str,
+    ) -> Result<SpannedToken, VdfError> {
+        self.ok_or_else(|| {
+            NoValidTokenError::new(expected, (source.len()..source.len()).into(), source.into())
+                .into()
+        })
+        .and_then(|token| token.expect_token(expected, source))
+    }
+}
+
+impl<'source> ExpectToken<'source> for Result<SpannedToken, Span> {
+    fn expect_token(
+        self,
+        expected: &'static [Token],
+        source: &'source str,
+    ) -> Result<SpannedToken, VdfError> {
+        self.map_err(|span| NoValidTokenError::new(expected, span.into(), source.into()).into())
+            .and_then(|token| token.expect_token(expected, source))
+    }
+}
+
+impl<'source> ExpectToken<'source> for SpannedToken {
+    fn expect_token(
+        self,
+        expected: &'static [Token],
+        source: &'source str,
+    ) -> Result<SpannedToken, VdfError> {
+        if expected.iter().any(|expect| self.token.eq(expect)) {
+            Ok(self)
+        } else {
+            Err(UnexpectedTokenError::new(
+                expected,
+                Some(self.token),
+                self.span.into(),
+                source.into(),
+            )
+            .into())
+        }
+    }
+}
+
+impl serde::de::Error for VdfError {
+    fn custom<T>(msg: T) -> Self
+    where
+        T: Display,
+    {
+        VdfError::Other(msg.to_string())
     }
 }

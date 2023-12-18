@@ -1,5 +1,3 @@
-"#base" "panelBase.res"
-
 "Resource/specificPanel.res"
 {
     // Specify panel-specific controls here
