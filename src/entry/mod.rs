@@ -177,7 +177,7 @@ macro_rules! from_str {
 	);
 }
 
-use serde::de::{Error, MapAccess, Visitor};
+use serde::de::{Error, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 from_str!(for IpAddr Ipv4Addr Ipv6Addr SocketAddr SocketAddrV4 SocketAddrV6);
@@ -311,6 +311,19 @@ impl<'de> Deserialize<'de> for Entry {
 
                 Ok(Entry::Table(res.into()))
             }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: SeqAccess<'v>,
+            {
+                let mut res = Vec::new();
+
+                while let Some(entry) = seq.next_element()? {
+                    res.push(entry);
+                }
+
+                Ok(Entry::Array(res.into()))
+            }
         }
 
         deserializer.deserialize_any(EntryVisitor)
@@ -340,6 +353,20 @@ fn test_serde_entry() {
 
     assert_eq!(
         Entry::Table(hashmap! {"foo".into() => Entry::Value("bar".into())}.into()),
+        unwrap_err(crate::from_str(j))
+    );
+
+    let j = r#""[1 2 3]""#;
+
+    assert_eq!(
+        Entry::Array(
+            vec![
+                Value::from("1").into(),
+                Value::from("2").into(),
+                Value::from("3").into()
+            ]
+            .into()
+        ),
         unwrap_err(crate::from_str(j))
     );
 }

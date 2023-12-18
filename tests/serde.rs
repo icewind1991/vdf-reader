@@ -192,9 +192,8 @@ fn test_serde(path: &str) {
 
 #[test_case("tests/data/toplevel.vdf")]
 #[test_case("tests/data/concrete.vmt")]
-// #[test_case("tests/data/messy.vdf")]
-// #[test_case("tests/data/DialogConfigOverlay_1280x720.vdf")]
-// #[test_case("tests/data/serde_array_type.vdf")]
+#[test_case("tests/data/DialogConfigOverlay_1280x720.vdf")]
+#[test_case("tests/data/serde_array_type.vdf")]
 fn test_serde_table(path: &str) {
     let raw = read_to_string(path).unwrap();
     match from_str::<Table>(&raw) {

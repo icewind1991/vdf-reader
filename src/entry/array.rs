@@ -7,6 +7,11 @@ use std::ops::{Deref, DerefMut};
 #[serde(transparent)]
 pub struct Array(Vec<Entry>);
 
+impl From<Vec<Entry>> for Array {
+    fn from(value: Vec<Entry>) -> Self {
+        Array(value)
+    }
+}
 impl From<Entry> for Array {
     fn from(value: Entry) -> Self {
         Array(vec![value])
