@@ -134,9 +134,15 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                 }
             }
             Token::GroupStart => {
-                self.push_peeked(token);
-                self.deserialize_map(visitor)
-                    .ensure_span(span, self.source())
+                let res = visitor.visit_map(TableWalker::new(self, false));
+                let span = span.start..self.last_span.end;
+                res.ensure_span(span.clone(), self.source()).map_err(|e| {
+                    if e.span().map(|s| s.offset()) == Some(span.start) {
+                        e.with_source_span(span, self.source())
+                    } else {
+                        e
+                    }
+                })
             }
             _ => unreachable!(),
         }

@@ -1,6 +1,6 @@
 ---
-source: tests/parse.rs
-expression: parsed
+source: tests/serde.rs
+expression: result
 ---
 {
   "bar": "asd",

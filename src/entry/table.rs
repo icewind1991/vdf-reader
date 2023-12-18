@@ -12,6 +12,12 @@ use std::ops::Deref;
 #[serde(transparent)]
 pub struct Table(#[serde(serialize_with = "ordered_map")] HashMap<String, Entry>);
 
+impl From<HashMap<String, Entry>> for Table {
+    fn from(value: HashMap<String, Entry>) -> Self {
+        Table(value)
+    }
+}
+
 fn ordered_map<S, K: Ord + Serialize, V: Serialize>(
     value: &HashMap<K, V>,
     serializer: S,
@@ -89,4 +95,22 @@ impl Deref for Table {
     fn deref(&self) -> &Self::Target {
         &self.0
     }
+}
+
+#[cfg(test)]
+#[track_caller]
+fn unwrap_err<T>(r: Result<T, crate::VdfError>) -> T {
+    r.map_err(miette::Error::from).unwrap()
+}
+
+#[test]
+fn test_serde_table() {
+    use maplit::hashmap;
+
+    let j = r#"{foo bar}"#;
+
+    assert_eq!(
+        Table(hashmap! {"foo".into() => Entry::Value("bar".into())}),
+        unwrap_err(crate::from_str(j))
+    );
 }

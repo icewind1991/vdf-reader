@@ -19,6 +19,17 @@ impl From<Statement> for Entry {
         Entry::Statement(statement)
     }
 }
+impl From<&'_ str> for Statement {
+    fn from(value: &str) -> Statement {
+        Statement(value.into())
+    }
+}
+
+impl From<String> for Statement {
+    fn from(value: String) -> Statement {
+        Statement(value)
+    }
+}
 
 impl From<Statement> for String {
     fn from(value: Statement) -> Self {

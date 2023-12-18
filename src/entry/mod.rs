@@ -8,12 +8,14 @@ use crate::Item;
 pub use array::Array;
 pub use statement::Statement;
 use std::any::type_name;
+use std::collections::HashMap;
+use std::fmt::Formatter;
 use std::slice;
 pub use table::Table;
 pub use value::Value;
 
 /// The kinds of entry.
-#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(untagged)]
 pub enum Entry {
     /// A table.
@@ -22,11 +24,11 @@ pub enum Entry {
     /// An array (entries with the same key).
     Array(Array),
 
-    /// A statement (the values starting with #).
-    Statement(Statement),
-
     /// A value.
     Value(Value),
+
+    /// A statement (the values starting with #).
+    Statement(Statement),
 }
 
 impl From<Item<'_>> for Entry {
@@ -175,7 +177,8 @@ macro_rules! from_str {
 	);
 }
 
-use serde::{Deserialize, Serialize};
+use serde::de::{Error, MapAccess, Visitor};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 from_str!(for IpAddr Ipv4Addr Ipv6Addr SocketAddr SocketAddrV4 SocketAddrV6);
 from_str!(for i8 i16 i32 i64 isize u8 u16 u32 u64 usize f32 f64);
@@ -229,4 +232,114 @@ impl<T: ParseItem> ParseItem for Option<T> {
     fn from_str(item: &str) -> Result<Self, ParseStringError> {
         T::from_str(item).map(Some)
     }
+}
+
+impl<'de> Deserialize<'de> for Entry {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct EntryVisitor;
+
+        impl<'v> Visitor<'v> for EntryVisitor {
+            type Value = Entry;
+
+            fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+                write!(formatter, "any string like value or group")
+            }
+
+            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                Ok(Entry::Value(v.to_string().into()))
+            }
+
+            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                Ok(Entry::Value(v.to_string().into()))
+            }
+
+            fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                Ok(Entry::Value(v.to_string().into()))
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                if v.starts_with('#') {
+                    Ok(Entry::Statement(v.to_string().into()))
+                } else {
+                    Ok(Entry::Value(v.to_string().into()))
+                }
+            }
+
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                if v.starts_with('#') {
+                    Ok(Entry::Statement(v.into()))
+                } else {
+                    Ok(Entry::Value(v.into()))
+                }
+            }
+
+            fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                let v = if v { "1" } else { "0" };
+                Ok(Entry::Value(v.to_string().into()))
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: MapAccess<'v>,
+            {
+                let mut res = HashMap::new();
+
+                while let Some(entry) = map.next_entry()? {
+                    res.insert(entry.0, entry.1);
+                }
+
+                Ok(Entry::Table(res.into()))
+            }
+        }
+
+        deserializer.deserialize_any(EntryVisitor)
+    }
+}
+
+#[cfg(test)]
+#[track_caller]
+fn unwrap_err<T>(r: Result<T, crate::VdfError>) -> T {
+    r.map_err(miette::Error::from).unwrap()
+}
+
+#[test]
+fn test_serde_entry() {
+    use maplit::hashmap;
+
+    let j = r#"1"#;
+    assert_eq!(Entry::Value("1".into()), unwrap_err(crate::from_str(j)));
+
+    let j = r#""foo bar""#;
+    assert_eq!(
+        Entry::Value("foo bar".into()),
+        unwrap_err(crate::from_str(j))
+    );
+
+    let j = r#"{foo bar}"#;
+
+    assert_eq!(
+        Entry::Table(hashmap! {"foo".into() => Entry::Value("bar".into())}.into()),
+        unwrap_err(crate::from_str(j))
+    );
 }

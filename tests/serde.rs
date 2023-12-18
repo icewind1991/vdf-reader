@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
 use test_case::test_case;
+use vdf_reader::entry::Table;
 use vdf_reader::from_str;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -185,6 +186,24 @@ fn test_serde(path: &str) {
             let mut out = String::new();
             handler.render_report(&mut out, &e).unwrap();
             insta::assert_snapshot!(path, out)
+        }
+    }
+}
+
+#[test_case("tests/data/toplevel.vdf")]
+#[test_case("tests/data/concrete.vmt")]
+// #[test_case("tests/data/messy.vdf")]
+// #[test_case("tests/data/DialogConfigOverlay_1280x720.vdf")]
+// #[test_case("tests/data/serde_array_type.vdf")]
+fn test_serde_table(path: &str) {
+    let raw = read_to_string(path).unwrap();
+    match from_str::<Table>(&raw) {
+        Ok(result) => insta::assert_ron_snapshot!(format!("table__{}", path), result),
+        Err(e) => {
+            let handler = GraphicalReportHandler::new_themed(GraphicalTheme::unicode_nocolor());
+            let mut out = String::new();
+            handler.render_report(&mut out, &e).unwrap();
+            insta::assert_snapshot!(format!("table__{}", path), out)
         }
     }
 }

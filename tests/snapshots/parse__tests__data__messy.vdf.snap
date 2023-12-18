@@ -4,16 +4,16 @@ expression: parsed
 ---
 {
   "Resource/specificPanel.res": {
-    "$envmaptint": Value(".5"),
-    ".5": Value(".5"),
-    "\\\\\"$translucent\"": Value("1"),
+    "$envmaptint": ".5",
+    ".5": ".5",
+    "\\\\\"$translucent\"": "1",
     "array": [
-      Value("1"),
-      Value("2"),
-      Value("3"),
+      "1",
+      "2",
+      "3",
     ],
-    "empty": Value(""),
-    "empty quoted": Value("\"\""),
-    "windows_path": Value("C:\\test\\no newline"),
+    "empty": "",
+    "empty quoted": "\"\"",
+    "windows_path": "C:\\test\\no newline",
   },
 }
