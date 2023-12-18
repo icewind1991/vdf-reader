@@ -11,6 +11,22 @@ This crate implements a deserializer for serde, but because VDF doesn't map that
 ### Limitations
 
 - Because the boolean values `0` and `1` can't be distinguished from numbers, it is not possible to use booleans in untagged enums.
+- When deserializing arrays by settings the same key multiple times, the keys have to be consecutive.
+  ```vdf
+  key: 1
+  key: 2
+  other: 3
+  ```
+  
+  will work, but
+  ```vdf
+  key: 1
+  other: 3
+  key: 2
+  ```
+  
+  will not.
+  
 
 
 ### Tagged enum root
