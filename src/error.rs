@@ -171,6 +171,16 @@ pub struct UnknownError {
     src: String,
 }
 
+impl From<&str> for UnknownError {
+    fn from(value: &str) -> Self {
+        UnknownError {
+            error: value.to_string(),
+            err_span: (0..0).into(),
+            src: String::new(),
+        }
+    }
+}
+
 /// A token that wasn't expected was found while parsing
 #[derive(Debug, Clone, Diagnostic)]
 #[diagnostic(code(vmt_reader::unexpected_token))]

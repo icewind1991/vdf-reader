@@ -3,8 +3,8 @@ mod statement;
 mod table;
 mod value;
 
-use crate::error::{ParseEntryError, ParseItemError, ParseStringError};
-use crate::Item;
+use crate::error::{ParseEntryError, ParseItemError, ParseStringError, UnknownError};
+use crate::{Item, VdfError};
 pub use array::Array;
 pub use statement::Statement;
 use std::any::type_name;
@@ -177,7 +177,9 @@ macro_rules! from_str {
 	);
 }
 
-use serde::de::{Error, MapAccess, SeqAccess, Visitor};
+use crate::entry::array::ArraySeq;
+use crate::entry::table::TableSeq;
+use serde::de::{DeserializeSeed, EnumAccess, Error, MapAccess, SeqAccess, VariantAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 from_str!(for IpAddr Ipv4Addr Ipv6Addr SocketAddr SocketAddrV4 SocketAddrV6);
@@ -327,6 +329,378 @@ impl<'de> Deserialize<'de> for Entry {
         }
 
         deserializer.deserialize_any(EntryVisitor)
+    }
+}
+
+impl<'de> Deserializer<'de> for Entry {
+    type Error = VdfError;
+
+    fn deserialize_any<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Table(table) => visitor.visit_map(TableSeq::new(table)),
+            Entry::Array(array) => visitor.visit_seq(ArraySeq::new(array)),
+            Entry::Value(val) => val.deserialize_any(visitor),
+            Entry::Statement(val) => visitor.visit_string(val.into()),
+        }
+    }
+
+    fn deserialize_bool<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_bool(visitor),
+            _ => Err(UnknownError::from("bool").into()),
+        }
+    }
+
+    fn deserialize_i8<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_i8(visitor),
+            _ => Err(UnknownError::from("i8").into()),
+        }
+    }
+
+    fn deserialize_i16<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_i16(visitor),
+            _ => Err(UnknownError::from("i16").into()),
+        }
+    }
+
+    fn deserialize_i32<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_i32(visitor),
+            _ => Err(UnknownError::from("i32").into()),
+        }
+    }
+
+    fn deserialize_i64<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_i64(visitor),
+            _ => Err(UnknownError::from("i64").into()),
+        }
+    }
+
+    fn deserialize_u8<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_u8(visitor),
+            _ => Err(UnknownError::from("u8").into()),
+        }
+    }
+
+    fn deserialize_u16<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_u16(visitor),
+            _ => Err(UnknownError::from("u16").into()),
+        }
+    }
+
+    fn deserialize_u32<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_u32(visitor),
+            _ => Err(UnknownError::from("u32").into()),
+        }
+    }
+
+    fn deserialize_u64<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_u64(visitor),
+            _ => Err(UnknownError::from("u64").into()),
+        }
+    }
+
+    fn deserialize_f32<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_f32(visitor),
+            _ => Err(UnknownError::from("f32").into()),
+        }
+    }
+
+    fn deserialize_f64<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_f64(visitor),
+            _ => Err(UnknownError::from("f64").into()),
+        }
+    }
+
+    fn deserialize_char<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_char(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_char(visitor),
+            _ => Err(UnknownError::from("char").into()),
+        }
+    }
+
+    fn deserialize_str<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_str(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_str(visitor),
+            _ => Err(UnknownError::from("str").into()),
+        }
+    }
+
+    fn deserialize_string<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_string(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_string(visitor),
+            _ => Err(UnknownError::from("string1").into()),
+        }
+    }
+
+    fn deserialize_bytes<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_bytes(visitor),
+            _ => Err(UnknownError::from("bytes").into()),
+        }
+    }
+
+    fn deserialize_byte_buf<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_bool(visitor),
+            _ => Err(UnknownError::from("bytes buf").into()),
+        }
+    }
+
+    fn deserialize_option<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_option(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_option(visitor),
+            _ => Err(UnknownError::from("option").into()),
+        }
+    }
+
+    fn deserialize_unit<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_unit(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_unit(visitor),
+            _ => Err(UnknownError::from("unit").into()),
+        }
+    }
+
+    fn deserialize_unit_struct<V>(
+        self,
+        name: &'static str,
+        visitor: V,
+    ) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Value(val) => val.deserialize_unit_struct(name, visitor),
+            _ => Err(UnknownError::from("unit_struct").into()),
+        }
+    }
+
+    fn deserialize_newtype_struct<V>(
+        self,
+        _name: &'static str,
+        _visitor: V,
+    ) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        todo!()
+    }
+
+    fn deserialize_seq<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Array(arr) => visitor.visit_seq(ArraySeq::new(arr)),
+            _ => Err(UnknownError::from("array2").into()),
+        }
+    }
+
+    fn deserialize_tuple<V>(self, _len: usize, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Array(arr) => visitor.visit_seq(ArraySeq::new(arr)),
+            _ => Err(UnknownError::from("tuple").into()),
+        }
+    }
+
+    fn deserialize_tuple_struct<V>(
+        self,
+        _name: &'static str,
+        _len: usize,
+        visitor: V,
+    ) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Array(arr) => visitor.visit_seq(ArraySeq::new(arr)),
+            _ => Err(UnknownError::from("tuple_struct").into()),
+        }
+    }
+
+    fn deserialize_map<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        match self {
+            Entry::Table(table) => visitor.visit_map(TableSeq::new(table)),
+            _ => Err(UnknownError::from("map").into()),
+        }
+    }
+
+    fn deserialize_struct<V>(
+        self,
+        _name: &'static str,
+        _fields: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        self.deserialize_map(visitor)
+    }
+
+    fn deserialize_enum<V>(
+        self,
+        _name: &'static str,
+        _variants: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        struct EnVarAccess {
+            variant: Value,
+            value: Entry,
+        }
+        struct EnValAccess {
+            value: Entry,
+        }
+
+        impl<'de> EnumAccess<'de> for EnVarAccess {
+            type Error = VdfError;
+            type Variant = EnValAccess;
+
+            fn variant_seed<V>(self, seed: V) -> Result<(V::Value, Self::Variant), Self::Error>
+            where
+                V: DeserializeSeed<'de>,
+            {
+                seed.deserialize(self.variant)
+                    .map(|v| (v, EnValAccess { value: self.value }))
+            }
+        }
+
+        impl<'de> VariantAccess<'de> for EnValAccess {
+            type Error = VdfError;
+
+            fn unit_variant(self) -> Result<(), Self::Error> {
+                Err(UnknownError::from("unit").into())
+            }
+
+            fn newtype_variant_seed<T>(self, seed: T) -> Result<T::Value, Self::Error>
+            where
+                T: DeserializeSeed<'de>,
+            {
+                seed.deserialize(self.value)
+            }
+
+            fn tuple_variant<V>(self, _len: usize, visitor: V) -> Result<V::Value, Self::Error>
+            where
+                V: Visitor<'de>,
+            {
+                self.value.deserialize_seq(visitor)
+            }
+
+            fn struct_variant<V>(
+                self,
+                _fields: &'static [&'static str],
+                visitor: V,
+            ) -> Result<V::Value, Self::Error>
+            where
+                V: Visitor<'de>,
+            {
+                self.value.deserialize_map(visitor)
+            }
+        }
+
+        match self {
+            Entry::Table(table) if table.len() == 1 => {
+                let (variant, value) = HashMap::from(table).into_iter().next().unwrap();
+                visitor.visit_enum(EnVarAccess {
+                    variant: variant.into(),
+                    value,
+                })
+            }
+            _ => Err(UnknownError::from("enum").into()),
+        }
+    }
+
+    fn deserialize_identifier<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        self.deserialize_string(visitor)
+    }
+
+    fn deserialize_ignored_any<V>(self, visitor: V) -> Result<V::Value, Self::Error>
+    where
+        V: Visitor<'de>,
+    {
+        self.deserialize_any(visitor)
     }
 }
 

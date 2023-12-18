@@ -1,0 +1,152 @@
+---
+source: tests/serde.rs
+expression: material
+---
+UserConfigData(
+  Steam: UserConfigDataSteam(
+    cached: UserConfigDataSteamCached(
+      r#OverlaySplash.res: {},
+    ),
+  ),
+  FriendsMainDialog: {
+    "xpos": 1028,
+    "ypos": 280,
+    "wide": 252,
+    "tall": 440,
+    "FriendPanelSelf": {},
+    "FriendsDialogSheet": UserConfigDataFriendsMainDialogFriendsDialogSheet(
+      FriendsFriendsPage: UserConfigDataFriendsMainDialogFriendsDialogSheetFriendsPage(
+        BuddyList: {
+          "0_collapsed": false,
+          "1_collapsed": false,
+          "2_collapsed": false,
+          "3_collapsed": false,
+          "4_collapsed": false,
+          "5_collapsed": false,
+          "allfriends_collapsed": false,
+        },
+      ),
+      FriendsClansPage: UserConfigDataFriendsMainDialogFriendsDialogSheetFriendsPage(
+        BuddyList: {
+          "0_collapsed": false,
+          "1_collapsed": false,
+          "2_collapsed": false,
+          "3_collapsed": false,
+        },
+      ),
+    ),
+    "FriendsState": {},
+  },
+  Servers: UserConfigDataServers(
+    r#DialogServerBrowser.res: {
+      "xpos": 0,
+      "ypos": 0,
+      "wide": 1280,
+      "tall": 720,
+      "GameTabs": UserConfigDataServersDialogGameTabs(
+        InternetGames: GameListHaver(
+          gamelist: GameList(
+            r##ServerBrowser_Password_hidden: false,
+            r##ServerBrowser_Bots_hidden: true,
+            r##ServerBrowser_Secure_hidden: false,
+            r##ServerBrowser_Servers_hidden: false,
+            r##ServerBrowser_IPAddress_hidden: true,
+            r##ServerBrowser_Game_hidden: false,
+            r##ServerBrowser_Players_hidden: false,
+            r##ServerBrowser_Map_hidden: false,
+            r##ServerBrowser_Latency_hidden: false,
+            sort_column: "#ServerBrowser_Latency",
+            sort_column_secondary: None,
+            sort_column_asc: true,
+            sort_column_secondary_asc: true,
+          ),
+        ),
+        FavoriteGames: GameListHaver(
+          gamelist: GameList(
+            r##ServerBrowser_Password_hidden: false,
+            r##ServerBrowser_Bots_hidden: true,
+            r##ServerBrowser_Secure_hidden: false,
+            r##ServerBrowser_Servers_hidden: false,
+            r##ServerBrowser_IPAddress_hidden: true,
+            r##ServerBrowser_Game_hidden: false,
+            r##ServerBrowser_Players_hidden: false,
+            r##ServerBrowser_Map_hidden: false,
+            r##ServerBrowser_Latency_hidden: false,
+            sort_column: "#ServerBrowser_Latency",
+            sort_column_secondary: None,
+            sort_column_asc: true,
+            sort_column_secondary_asc: true,
+          ),
+        ),
+        HistoryGames: GameListHaver(
+          gamelist: GameList(
+            r##ServerBrowser_Password_hidden: false,
+            r##ServerBrowser_Bots_hidden: true,
+            r##ServerBrowser_Secure_hidden: false,
+            r##ServerBrowser_Servers_hidden: false,
+            r##ServerBrowser_IPAddress_hidden: true,
+            r##ServerBrowser_Game_hidden: false,
+            r##ServerBrowser_Players_hidden: false,
+            r##ServerBrowser_Map_hidden: false,
+            r##ServerBrowser_Latency_hidden: false,
+            sort_column: "#ServerBrowser_LastPlayed",
+            sort_column_secondary: Some("#ServerBrowser_Latency"),
+            sort_column_asc: true,
+            sort_column_secondary_asc: true,
+          ),
+        ),
+        SpectateGames: GameListHaver(
+          gamelist: GameList(
+            r##ServerBrowser_Password_hidden: false,
+            r##ServerBrowser_Bots_hidden: true,
+            r##ServerBrowser_Secure_hidden: false,
+            r##ServerBrowser_Servers_hidden: false,
+            r##ServerBrowser_IPAddress_hidden: true,
+            r##ServerBrowser_Game_hidden: false,
+            r##ServerBrowser_Players_hidden: false,
+            r##ServerBrowser_Map_hidden: false,
+            r##ServerBrowser_Latency_hidden: false,
+            sort_column: "#ServerBrowser_Latency",
+            sort_column_secondary: None,
+            sort_column_asc: true,
+            sort_column_secondary_asc: true,
+          ),
+        ),
+        LanGames: GameListHaver(
+          gamelist: GameList(
+            r##ServerBrowser_Password_hidden: false,
+            r##ServerBrowser_Bots_hidden: true,
+            r##ServerBrowser_Secure_hidden: false,
+            r##ServerBrowser_Servers_hidden: false,
+            r##ServerBrowser_IPAddress_hidden: true,
+            r##ServerBrowser_Game_hidden: false,
+            r##ServerBrowser_Players_hidden: false,
+            r##ServerBrowser_Map_hidden: false,
+            r##ServerBrowser_Latency_hidden: false,
+            sort_column: "#ServerBrowser_Latency",
+            sort_column_secondary: None,
+            sort_column_asc: true,
+            sort_column_secondary_asc: true,
+          ),
+        ),
+        FriendsGames: GameListHaver(
+          gamelist: GameList(
+            r##ServerBrowser_Password_hidden: false,
+            r##ServerBrowser_Bots_hidden: true,
+            r##ServerBrowser_Secure_hidden: false,
+            r##ServerBrowser_Servers_hidden: false,
+            r##ServerBrowser_IPAddress_hidden: true,
+            r##ServerBrowser_Game_hidden: false,
+            r##ServerBrowser_Players_hidden: false,
+            r##ServerBrowser_Map_hidden: false,
+            r##ServerBrowser_Latency_hidden: false,
+            sort_column: "#ServerBrowser_Latency",
+            sort_column_secondary: None,
+            sort_column_asc: true,
+            sort_column_secondary_asc: true,
+          ),
+        ),
+      ),
+    },
+  ),
+)

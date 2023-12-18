@@ -1,4 +1,4 @@
-use crate::entry::ParseItem;
+use crate::entry::{Entry, ParseItem};
 use crate::error::{ExpectToken, NoValidTokenError, ResultExt, SerdeParseError};
 use crate::tokenizer::{SpannedToken, Tokenizer};
 use crate::{Token, VdfError};
@@ -90,6 +90,13 @@ where
 {
     let mut deserializer = Deserializer::from_str(s);
     T::deserialize(&mut deserializer)
+}
+
+pub fn from_entry<'a, T>(entry: Entry) -> Result<T>
+where
+    T: Deserialize<'a>,
+{
+    T::deserialize(entry)
 }
 
 const VALUE_TOKEN: &[Token] = &[

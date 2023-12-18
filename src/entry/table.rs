@@ -1,7 +1,9 @@
 use super::{Array, Entry};
 use crate::entry::{Statement, Value};
+use crate::error::UnknownError;
 use crate::event::{EntryEvent, GroupStartEvent};
-use crate::{Event, Item, Reader, Result};
+use crate::{Event, Item, Reader, Result, VdfError};
+use serde::de::{DeserializeSeed, MapAccess};
 use serde::{Deserialize, Serialize, Serializer};
 use std::collections::hash_map;
 use std::collections::HashMap;
@@ -53,6 +55,11 @@ fn insert<K: Into<String>, V: Into<Entry>>(map: &mut HashMap<String, Entry>, key
 }
 
 impl Table {
+    pub fn load_from_str(input: &str) -> Result<Table> {
+        let mut reader = Reader::from(input);
+        Self::load(&mut reader)
+    }
+
     /// Load a table from the given `Reader`.
     pub fn load(reader: &mut Reader) -> Result<Table> {
         let mut map = HashMap::new();
@@ -89,11 +96,61 @@ impl From<Table> for Entry {
     }
 }
 
+impl From<Table> for HashMap<String, Entry> {
+    fn from(table: Table) -> Self {
+        table.0
+    }
+}
+
 impl Deref for Table {
     type Target = HashMap<String, Entry>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+pub(crate) struct TableSeq {
+    iter: hash_map::IntoIter<String, Entry>,
+    next_item: Option<Entry>,
+}
+
+impl TableSeq {
+    pub(crate) fn new(table: Table) -> Self {
+        TableSeq {
+            iter: table.0.into_iter(),
+            next_item: None,
+        }
+    }
+}
+
+impl<'de> MapAccess<'de> for TableSeq {
+    type Error = VdfError;
+
+    fn next_key_seed<K>(&mut self, seed: K) -> std::result::Result<Option<K::Value>, Self::Error>
+    where
+        K: DeserializeSeed<'de>,
+    {
+        let (key, value) = match self.iter.next() {
+            Some(pair) => pair,
+            None => {
+                return Ok(None);
+            }
+        };
+        self.next_item = Some(value);
+        seed.deserialize(Value::from(key)).map(Some)
+    }
+
+    fn next_value_seed<V>(&mut self, seed: V) -> std::result::Result<V::Value, Self::Error>
+    where
+        V: DeserializeSeed<'de>,
+    {
+        let item = match self.next_item.take() {
+            Some(item) => item,
+            None => return Err(UnknownError::from("double take value").into()),
+        };
+
+        seed.deserialize(item)
     }
 }
 
