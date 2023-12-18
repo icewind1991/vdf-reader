@@ -1,0 +1,15 @@
+---
+source: tests/serde.rs
+expression: out
+---
+vmt_parser::parse_serde
+
+  × Can't parse "2" as bool
+   ╭─[4:1]
+ 4 │         "$bumpmap" "concrete/concretefloor007b_height-ssbump"
+ 5 │         "$ssbump" "2"
+   ·                   ─┬─
+   ·                    ╰── Expected a bool
+ 6 │         "%keywords" "tf"
+   ╰────
+

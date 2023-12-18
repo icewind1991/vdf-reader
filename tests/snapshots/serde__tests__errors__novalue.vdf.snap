@@ -1,0 +1,14 @@
+---
+source: tests/serde.rs
+expression: out
+---
+vmt_reader::unexpected_token
+
+  × Unexpected token, found end of group expected one of item, quoted item, statement, quoted statement, start of group
+   ╭─[3:1]
+ 3 │     foo
+ 4 │ }
+   · ┬
+   · ╰── Expected item, quoted item, statement, quoted statement, start of group
+   ╰────
+
