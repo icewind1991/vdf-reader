@@ -2,13 +2,14 @@ use super::{Array, Entry};
 use crate::entry::{Statement, Value};
 use crate::event::{EntryEvent, GroupStartEvent};
 use crate::{Event, Item, Reader, Result};
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 use std::collections::hash_map;
 use std::collections::HashMap;
 use std::ops::Deref;
 
 /// A table of entries.
-#[derive(Clone, PartialEq, Eq, Debug, Serialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+#[serde(transparent)]
 pub struct Table(#[serde(serialize_with = "ordered_map")] HashMap<String, Entry>);
 
 fn ordered_map<S, K: Ord + Serialize, V: Serialize>(

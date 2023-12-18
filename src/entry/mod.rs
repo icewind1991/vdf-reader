@@ -13,7 +13,8 @@ pub use table::Table;
 pub use value::Value;
 
 /// The kinds of entry.
-#[derive(Clone, PartialEq, Eq, Debug, Serialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+#[serde(untagged)]
 pub enum Entry {
     /// A table.
     Table(Table),
@@ -174,7 +175,7 @@ macro_rules! from_str {
 	);
 }
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 from_str!(for IpAddr Ipv4Addr Ipv6Addr SocketAddr SocketAddrV4 SocketAddrV6);
 from_str!(for i8 i16 i32 i64 isize u8 u16 u32 u64 usize f32 f64);

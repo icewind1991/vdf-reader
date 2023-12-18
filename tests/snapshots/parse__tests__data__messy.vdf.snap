@@ -2,18 +2,18 @@
 source: tests/parse.rs
 expression: parsed
 ---
-Table({
-  "Resource/specificPanel.res": Table({
+{
+  "Resource/specificPanel.res": {
     "$envmaptint": Value(".5"),
     ".5": Value(".5"),
     "\\\\\"$translucent\"": Value("1"),
-    "array": Array([
+    "array": [
       Value("1"),
       Value("2"),
       Value("3"),
-    ]),
+    ],
     "empty": Value(""),
     "empty quoted": Value("\"\""),
     "windows_path": Value("C:\\test\\no newline"),
-  }),
-})
+  },
+}

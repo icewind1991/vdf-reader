@@ -2,21 +2,21 @@
 source: tests/parse.rs
 expression: parsed
 ---
-Table({
-  "UserConfigData": Table({
-    "FriendsMainDialog": Table({
-      "FriendPanelSelf": Table({}),
-      "FriendsDialogSheet": Table({
-        "FriendsClansPage": Table({
-          "BuddyList": Table({
+{
+  "UserConfigData": {
+    "FriendsMainDialog": {
+      "FriendPanelSelf": {},
+      "FriendsDialogSheet": {
+        "FriendsClansPage": {
+          "BuddyList": {
             "0_collapsed": Value("0"),
             "1_collapsed": Value("0"),
             "2_collapsed": Value("0"),
             "3_collapsed": Value("0"),
-          }),
-        }),
-        "FriendsFriendsPage": Table({
-          "BuddyList": Table({
+          },
+        },
+        "FriendsFriendsPage": {
+          "BuddyList": {
             "0_collapsed": Value("0"),
             "1_collapsed": Value("0"),
             "2_collapsed": Value("0"),
@@ -24,132 +24,132 @@ Table({
             "4_collapsed": Value("0"),
             "5_collapsed": Value("0"),
             "allfriends_collapsed": Value("0"),
-          }),
-        }),
-      }),
-      "FriendsState": Table({}),
+          },
+        },
+      },
+      "FriendsState": {},
       "tall": Value("440"),
       "wide": Value("252"),
       "xpos": Value("1028"),
       "ypos": Value("280"),
-    }),
-    "Servers": Table({
-      "DialogServerBrowser.res": Table({
-        "GameTabs": Table({
-          "FavoriteGames": Table({
-            "gamelist": Table({
-              "#ServerBrowser_Bots_hidden": Statement("1"),
-              "#ServerBrowser_Game_hidden": Statement("0"),
-              "#ServerBrowser_IPAddress_hidden": Statement("1"),
-              "#ServerBrowser_Latency_hidden": Statement("0"),
-              "#ServerBrowser_Map_hidden": Statement("0"),
-              "#ServerBrowser_Password_hidden": Statement("0"),
-              "#ServerBrowser_Players_hidden": Statement("0"),
-              "#ServerBrowser_Secure_hidden": Statement("0"),
-              "#ServerBrowser_Servers_hidden": Statement("0"),
+    },
+    "Servers": {
+      "DialogServerBrowser.res": {
+        "GameTabs": {
+          "FavoriteGames": {
+            "gamelist": {
+              "#ServerBrowser_Bots_hidden": "1",
+              "#ServerBrowser_Game_hidden": "0",
+              "#ServerBrowser_IPAddress_hidden": "1",
+              "#ServerBrowser_Latency_hidden": "0",
+              "#ServerBrowser_Map_hidden": "0",
+              "#ServerBrowser_Password_hidden": "0",
+              "#ServerBrowser_Players_hidden": "0",
+              "#ServerBrowser_Secure_hidden": "0",
+              "#ServerBrowser_Servers_hidden": "0",
               "sort_column": Value("#ServerBrowser_Latency"),
               "sort_column_asc": Value("1"),
               "sort_column_secondary": Value(""),
               "sort_column_secondary_asc": Value("1"),
-            }),
-          }),
-          "FriendsGames": Table({
-            "gamelist": Table({
-              "#ServerBrowser_Bots_hidden": Statement("1"),
-              "#ServerBrowser_Game_hidden": Statement("0"),
-              "#ServerBrowser_IPAddress_hidden": Statement("1"),
-              "#ServerBrowser_Latency_hidden": Statement("0"),
-              "#ServerBrowser_Map_hidden": Statement("0"),
-              "#ServerBrowser_Password_hidden": Statement("0"),
-              "#ServerBrowser_Players_hidden": Statement("0"),
-              "#ServerBrowser_Secure_hidden": Statement("0"),
-              "#ServerBrowser_Servers_hidden": Statement("0"),
+            },
+          },
+          "FriendsGames": {
+            "gamelist": {
+              "#ServerBrowser_Bots_hidden": "1",
+              "#ServerBrowser_Game_hidden": "0",
+              "#ServerBrowser_IPAddress_hidden": "1",
+              "#ServerBrowser_Latency_hidden": "0",
+              "#ServerBrowser_Map_hidden": "0",
+              "#ServerBrowser_Password_hidden": "0",
+              "#ServerBrowser_Players_hidden": "0",
+              "#ServerBrowser_Secure_hidden": "0",
+              "#ServerBrowser_Servers_hidden": "0",
               "sort_column": Value("#ServerBrowser_Latency"),
               "sort_column_asc": Value("1"),
               "sort_column_secondary": Value(""),
               "sort_column_secondary_asc": Value("1"),
-            }),
-          }),
-          "HistoryGames": Table({
-            "gamelist": Table({
-              "#ServerBrowser_Bots_hidden": Statement("1"),
-              "#ServerBrowser_Game_hidden": Statement("0"),
-              "#ServerBrowser_IPAddress_hidden": Statement("1"),
-              "#ServerBrowser_LastPlayed_hidden": Statement("0"),
-              "#ServerBrowser_Latency_hidden": Statement("0"),
-              "#ServerBrowser_Map_hidden": Statement("0"),
-              "#ServerBrowser_Password_hidden": Statement("0"),
-              "#ServerBrowser_Players_hidden": Statement("0"),
-              "#ServerBrowser_Secure_hidden": Statement("0"),
-              "#ServerBrowser_Servers_hidden": Statement("0"),
+            },
+          },
+          "HistoryGames": {
+            "gamelist": {
+              "#ServerBrowser_Bots_hidden": "1",
+              "#ServerBrowser_Game_hidden": "0",
+              "#ServerBrowser_IPAddress_hidden": "1",
+              "#ServerBrowser_LastPlayed_hidden": "0",
+              "#ServerBrowser_Latency_hidden": "0",
+              "#ServerBrowser_Map_hidden": "0",
+              "#ServerBrowser_Password_hidden": "0",
+              "#ServerBrowser_Players_hidden": "0",
+              "#ServerBrowser_Secure_hidden": "0",
+              "#ServerBrowser_Servers_hidden": "0",
               "sort_column": Value("#ServerBrowser_LastPlayed"),
               "sort_column_asc": Value("1"),
               "sort_column_secondary": Value("#ServerBrowser_Latency"),
               "sort_column_secondary_asc": Value("1"),
-            }),
-          }),
-          "InternetGames": Table({
-            "gamelist": Table({
-              "#ServerBrowser_Bots_hidden": Statement("1"),
-              "#ServerBrowser_Game_hidden": Statement("0"),
-              "#ServerBrowser_IPAddress_hidden": Statement("1"),
-              "#ServerBrowser_Latency_hidden": Statement("0"),
-              "#ServerBrowser_Map_hidden": Statement("0"),
-              "#ServerBrowser_Password_hidden": Statement("0"),
-              "#ServerBrowser_Players_hidden": Statement("0"),
-              "#ServerBrowser_Secure_hidden": Statement("0"),
-              "#ServerBrowser_Servers_hidden": Statement("0"),
+            },
+          },
+          "InternetGames": {
+            "gamelist": {
+              "#ServerBrowser_Bots_hidden": "1",
+              "#ServerBrowser_Game_hidden": "0",
+              "#ServerBrowser_IPAddress_hidden": "1",
+              "#ServerBrowser_Latency_hidden": "0",
+              "#ServerBrowser_Map_hidden": "0",
+              "#ServerBrowser_Password_hidden": "0",
+              "#ServerBrowser_Players_hidden": "0",
+              "#ServerBrowser_Secure_hidden": "0",
+              "#ServerBrowser_Servers_hidden": "0",
               "sort_column": Value("#ServerBrowser_Latency"),
               "sort_column_asc": Value("1"),
               "sort_column_secondary": Value(""),
               "sort_column_secondary_asc": Value("1"),
-            }),
-          }),
-          "LanGames": Table({
-            "gamelist": Table({
-              "#ServerBrowser_Bots_hidden": Statement("1"),
-              "#ServerBrowser_Game_hidden": Statement("0"),
-              "#ServerBrowser_IPAddress_hidden": Statement("1"),
-              "#ServerBrowser_Latency_hidden": Statement("0"),
-              "#ServerBrowser_Map_hidden": Statement("0"),
-              "#ServerBrowser_Password_hidden": Statement("0"),
-              "#ServerBrowser_Players_hidden": Statement("0"),
-              "#ServerBrowser_Secure_hidden": Statement("0"),
-              "#ServerBrowser_Servers_hidden": Statement("0"),
+            },
+          },
+          "LanGames": {
+            "gamelist": {
+              "#ServerBrowser_Bots_hidden": "1",
+              "#ServerBrowser_Game_hidden": "0",
+              "#ServerBrowser_IPAddress_hidden": "1",
+              "#ServerBrowser_Latency_hidden": "0",
+              "#ServerBrowser_Map_hidden": "0",
+              "#ServerBrowser_Password_hidden": "0",
+              "#ServerBrowser_Players_hidden": "0",
+              "#ServerBrowser_Secure_hidden": "0",
+              "#ServerBrowser_Servers_hidden": "0",
               "sort_column": Value("#ServerBrowser_Latency"),
               "sort_column_asc": Value("1"),
               "sort_column_secondary": Value(""),
               "sort_column_secondary_asc": Value("1"),
-            }),
-          }),
-          "SpectateGames": Table({
-            "gamelist": Table({
-              "#ServerBrowser_Bots_hidden": Statement("1"),
-              "#ServerBrowser_Game_hidden": Statement("0"),
-              "#ServerBrowser_IPAddress_hidden": Statement("1"),
-              "#ServerBrowser_Latency_hidden": Statement("0"),
-              "#ServerBrowser_Map_hidden": Statement("0"),
-              "#ServerBrowser_Password_hidden": Statement("0"),
-              "#ServerBrowser_Players_hidden": Statement("0"),
-              "#ServerBrowser_Secure_hidden": Statement("0"),
-              "#ServerBrowser_Servers_hidden": Statement("0"),
+            },
+          },
+          "SpectateGames": {
+            "gamelist": {
+              "#ServerBrowser_Bots_hidden": "1",
+              "#ServerBrowser_Game_hidden": "0",
+              "#ServerBrowser_IPAddress_hidden": "1",
+              "#ServerBrowser_Latency_hidden": "0",
+              "#ServerBrowser_Map_hidden": "0",
+              "#ServerBrowser_Password_hidden": "0",
+              "#ServerBrowser_Players_hidden": "0",
+              "#ServerBrowser_Secure_hidden": "0",
+              "#ServerBrowser_Servers_hidden": "0",
               "sort_column": Value("#ServerBrowser_Latency"),
               "sort_column_asc": Value("1"),
               "sort_column_secondary": Value(""),
               "sort_column_secondary_asc": Value("1"),
-            }),
-          }),
-        }),
+            },
+          },
+        },
         "tall": Value("720"),
         "wide": Value("1280"),
         "xpos": Value("0"),
         "ypos": Value("0"),
-      }),
-    }),
-    "Steam": Table({
-      "cached": Table({
-        "OverlaySplash.res": Table({}),
-      }),
-    }),
-  }),
-})
+      },
+    },
+    "Steam": {
+      "cached": {
+        "OverlaySplash.res": {},
+      },
+    },
+  },
+}

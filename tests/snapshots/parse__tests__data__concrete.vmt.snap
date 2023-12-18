@@ -2,8 +2,8 @@
 source: tests/parse.rs
 expression: parsed
 ---
-Table({
-  "LightmappedGeneric": Table({
+{
+  "LightmappedGeneric": {
     "$baseTexture": Value("cp_mountainlab/concrete/concretefloor003"),
     "$bumpmap": Value("concrete/concretefloor007b_height-ssbump"),
     "$detail": Value("overlays/detail001"),
@@ -12,5 +12,5 @@ Table({
     "$detailscale": Value("1.9"),
     "$ssbump": Value("1"),
     "%keywords": Value("tf"),
-  }),
-})
+  },
+}

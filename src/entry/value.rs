@@ -1,9 +1,9 @@
 use super::Entry;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::ops::Deref;
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct Value(String);
 
 impl From<Cow<'_, str>> for Value {
