@@ -321,10 +321,27 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        self.next()
-            .expect_token(&[Token::GroupStart], self.source())?;
+        // as a special case we allow a map without a `{` at the start of the file to create a top level struct
+        let toplevel = match dbg!(self
+            .peek()
+            .expect_token(&[Token::GroupStart], self.source()))
+        {
+            Ok(_) => {
+                let _ = self.next();
+                false
+            }
+            Err(VdfError::UnexpectedToken(e)) => {
+                if dbg!(self.tokenizer.count) > 1 {
+                    return Err(e.into());
+                }
+                true
+            }
+            Err(e) => {
+                return Err(e);
+            }
+        };
 
-        let value = visitor.visit_map(TableWalker::new(&mut self))?;
+        let value = visitor.visit_map(TableWalker::new(&mut self, toplevel))?;
         Ok(value)
     }
 
@@ -370,11 +387,24 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
 struct TableWalker<'source, 'a> {
     de: &'a mut Deserializer<'source>,
     done: bool,
+    toplevel: bool,
 }
 
+const KEY_TOKEN: &[Token] = &[
+    Token::Item,
+    Token::QuotedItem,
+    Token::Statement,
+    Token::QuotedStatement,
+    Token::GroupEnd,
+];
+
 impl<'source, 'a> TableWalker<'source, 'a> {
-    pub fn new(de: &'a mut Deserializer<'source>) -> Self {
-        TableWalker { de, done: false }
+    pub fn new(de: &'a mut Deserializer<'source>, toplevel: bool) -> Self {
+        TableWalker {
+            de,
+            done: false,
+            toplevel,
+        }
     }
 
     fn source(&self) -> &'source str {
@@ -386,16 +416,26 @@ impl<'source, 'a> TableWalker<'source, 'a> {
             return Ok(None);
         }
 
-        let key = self.de.next().expect_token(
-            &[
-                Token::Item,
-                Token::QuotedItem,
-                Token::Statement,
-                Token::QuotedStatement,
-                Token::GroupEnd,
-            ],
-            self.source(),
-        )?;
+        let expected = if self.toplevel {
+            STRING_ITEMS
+        } else {
+            KEY_TOKEN
+        };
+
+        let token = match (self.de.next(), self.toplevel) {
+            (Some(token), _) => token,
+            (None, true) => {
+                self.done = true;
+                return Ok(None);
+            }
+            (None, false) => {
+                return Err(None::<SpannedToken>
+                    .expect_token(expected, self.source())
+                    .unwrap_err())
+            }
+        };
+
+        let key = token.expect_token(expected, self.source())?;
 
         if key.token == Token::GroupEnd {
             self.done = true;
@@ -444,7 +484,7 @@ impl<'source, 'a> SeqWalker<'source, 'a> {
         SeqWalker {
             done: false,
             key,
-            table: TableWalker::new(de),
+            table: TableWalker::new(de, false),
         }
     }
 
@@ -588,6 +628,22 @@ mod tests {
         }
 
         let j = r#"{"int" 1 "seq" "b"}"#;
+        let expected = Test {
+            int: 1,
+            seq: "b".into(),
+        };
+        assert_eq!(expected, unwrap_err(from_str(j)));
+    }
+
+    #[test]
+    fn test_struct_toplevel() {
+        #[derive(Deserialize, PartialEq, Debug)]
+        struct Test {
+            int: u32,
+            seq: String,
+        }
+
+        let j = r#""int" 1 "seq" "b""#;
         let expected = Test {
             int: 1,
             seq: "b".into(),

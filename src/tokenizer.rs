@@ -21,12 +21,15 @@ impl SpannedToken {
 
 pub struct Tokenizer<'source> {
     lexer: Lexer<'source, Token>,
+    /// The number of tokens tokenized so far
+    pub count: usize,
 }
 
 impl<'source> Tokenizer<'source> {
     pub fn from_str(input: &'source str) -> Self {
         Tokenizer {
             lexer: Lexer::new(input),
+            count: 0,
         }
     }
 
@@ -48,6 +51,7 @@ impl<'source> Iterator for Tokenizer<'source> {
                 return None;
             }
         };
+        self.count += 1;
         Some(Ok(SpannedToken {
             token,
             span: self.lexer.span(),
