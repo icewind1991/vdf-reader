@@ -7,6 +7,11 @@ use vdf_reader::from_str;
 
 #[derive(Debug, Serialize, Deserialize)]
 enum Expected {
+    Types {
+        fixed_array: [u8; 3],
+        flex_array: Vec<f32>,
+        tuple: (bool, u8),
+    },
     LightmappedGeneric {
         #[serde(rename = "$baseTexture")]
         base_texture: String,
@@ -152,8 +157,10 @@ struct GameList {
 #[test_case("tests/data/concrete.vmt")]
 #[test_case("tests/data/messy.vdf")]
 #[test_case("tests/data/DialogConfigOverlay_1280x720.vdf")]
+#[test_case("tests/data/serde_array_type.vdf")]
 #[test_case("tests/errors/concrete.vmt")]
 #[test_case("tests/errors/novalue.vdf")]
+#[test_case("tests/errors/serde_array_type.vdf")]
 fn test_serde(path: &str) {
     let raw = read_to_string(path).unwrap();
     match from_str::<Expected>(&raw) {

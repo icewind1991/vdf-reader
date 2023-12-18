@@ -42,6 +42,42 @@ pub enum VdfError {
     Other(String),
 }
 
+impl VdfError {
+    pub(crate) fn with_source_span<Sp: Into<SourceSpan>, Sr: Into<String>>(
+        self,
+        span: Sp,
+        source: Sr,
+    ) -> VdfError {
+        match self {
+            VdfError::UnexpectedToken(e) => UnexpectedTokenError {
+                src: source.into(),
+                err_span: span.into(),
+                ..e
+            }
+            .into(),
+            VdfError::NoValidToken(e) => NoValidTokenError {
+                src: source.into(),
+                err_span: span.into(),
+                ..e
+            }
+            .into(),
+            VdfError::WrongEntryType(e) => WrongEventTypeError {
+                src: source.into(),
+                err_span: span.into(),
+                ..e
+            }
+            .into(),
+            VdfError::SerdeParse(e) => SerdeParseError {
+                src: source.into(),
+                err_span: span.into(),
+                ..e
+            }
+            .into(),
+            _ => self,
+        }
+    }
+}
+
 struct ExpectedTokens<'a>(&'a [Token]);
 
 impl Display for ExpectedTokens<'_> {

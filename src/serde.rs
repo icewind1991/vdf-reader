@@ -293,9 +293,17 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        let key = self.last_key.clone();
-        let value = visitor.visit_seq(SeqWalker::new(&mut self, key))?;
-        Ok(value)
+        let token = self.peek().expect_token(STRING_ITEMS, self.source())?;
+        let value_str = &self.source()[token.span.clone()];
+        if value_str.starts_with("\"[") && value_str.ends_with("]\"") {
+            let _ = self.next();
+            let seq = &value_str[2..value_str.len() - 2];
+            let span = token.span.start + 2..token.span.end - 2;
+            visitor.visit_seq(StringArrayWalker::new(self.source(), seq, span))
+        } else {
+            let key = self.last_key.clone();
+            visitor.visit_seq(SeqWalker::new(&mut self, key))
+        }
     }
 
     fn deserialize_tuple<V>(self, _len: usize, visitor: V) -> Result<V::Value>
@@ -322,16 +330,16 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         V: Visitor<'de>,
     {
         // as a special case we allow a map without a `{` at the start of the file to create a top level struct
-        let toplevel = match dbg!(self
+        let toplevel = match self
             .peek()
-            .expect_token(&[Token::GroupStart], self.source()))
+            .expect_token(&[Token::GroupStart], self.source())
         {
             Ok(_) => {
                 let _ = self.next();
                 false
             }
             Err(VdfError::UnexpectedToken(e)) => {
-                if dbg!(self.tokenizer.count) > 1 {
+                if self.tokenizer.count > 1 {
                     return Err(e.into());
                 }
                 true
@@ -523,6 +531,55 @@ impl<'de, 'a> SeqAccess<'de> for SeqWalker<'de, 'a> {
         }
 
         Ok(value)
+    }
+}
+
+struct StringArrayWalker<'source> {
+    source: &'source str,
+    remaining: &'source str,
+    span: Span,
+}
+
+impl<'source> StringArrayWalker<'source> {
+    fn new(source: &'source str, array: &'source str, span: Span) -> Self {
+        StringArrayWalker {
+            source,
+            remaining: array,
+            span,
+        }
+    }
+}
+
+impl<'de, 'source> SeqAccess<'de> for StringArrayWalker<'source>
+where
+    'source: 'de,
+{
+    type Error = VdfError;
+
+    fn next_element_seed<T>(
+        &mut self,
+        seed: T,
+    ) -> std::result::Result<Option<T::Value>, Self::Error>
+    where
+        T: DeserializeSeed<'de>,
+    {
+        if self.remaining.is_empty() {
+            return Ok(None);
+        }
+
+        let (item, rest) = self
+            .remaining
+            .split_once(" ")
+            .unwrap_or((self.remaining, ""));
+        let item_span = self.span.start..(self.span.start + item.len());
+        self.remaining = rest.trim();
+        self.span = (self.span.end - self.remaining.len())..self.span.end;
+
+        let mut de = Deserializer::from_str(item);
+        let val = seed
+            .deserialize(&mut de)
+            .map_err(|e| e.with_source_span(item_span, self.source))?;
+        Ok(Some(val))
     }
 }
 

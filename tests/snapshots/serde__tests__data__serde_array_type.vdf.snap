@@ -1,0 +1,12 @@
+---
+source: tests/serde.rs
+expression: result
+---
+Types(
+  fixed_array: (1, 2, 3),
+  flex_array: [
+    1.0,
+    2.2,
+  ],
+  tuple: (true, 57),
+)
