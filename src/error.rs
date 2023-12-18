@@ -42,8 +42,9 @@ pub enum VdfError {
     #[diagnostic(transparent)]
     /// Failed to parse serde string
     SerdeParse(#[from] SerdeParseError),
-    #[error("{0}")]
-    Other(String),
+    #[error(transparent)]
+    #[diagnostic(transparent)]
+    Other(#[from] UnknownError),
 }
 
 impl From<WrongEventTypeError> for VdfError {
@@ -53,12 +54,58 @@ impl From<WrongEventTypeError> for VdfError {
 }
 
 impl VdfError {
+    pub fn source(&self) -> Option<&str> {
+        let src = match self {
+            VdfError::Other(e) => e.src.as_str(),
+            VdfError::UnexpectedToken(e) => e.src.as_str(),
+            VdfError::NoValidToken(e) => e.src.as_str(),
+            VdfError::WrongEntryType(e) => e.src.as_str(),
+            VdfError::SerdeParse(e) => e.src.as_str(),
+            VdfError::UnknownVariant(e) => e.src.as_str(),
+            _ => {
+                return None;
+            }
+        };
+        (!src.is_empty()).then_some(src)
+    }
+    pub fn span(&self) -> Option<SourceSpan> {
+        let span = match self {
+            VdfError::Other(e) => e.err_span,
+            VdfError::UnexpectedToken(e) => e.err_span,
+            VdfError::NoValidToken(e) => e.err_span,
+            VdfError::WrongEntryType(e) => e.err_span,
+            VdfError::SerdeParse(e) => e.err_span,
+            VdfError::UnknownVariant(e) => e.err_span,
+            _ => {
+                return None;
+            }
+        };
+        (!span.is_empty()).then_some(span)
+    }
+
+    pub(crate) fn with_source_span_if_none<Sp: Into<SourceSpan>, Sr: Into<String>>(
+        self,
+        span: Sp,
+        source: Sr,
+    ) -> VdfError {
+        if self.source().is_none() {
+            self.with_source_span(span, source)
+        } else {
+            self
+        }
+    }
     pub(crate) fn with_source_span<Sp: Into<SourceSpan>, Sr: Into<String>>(
         self,
         span: Sp,
         source: Sr,
     ) -> VdfError {
         match self {
+            VdfError::Other(e) => UnknownError {
+                src: source.into(),
+                err_span: span.into(),
+                ..e
+            }
+            .into(),
             VdfError::UnexpectedToken(e) => UnexpectedTokenError {
                 src: source.into(),
                 err_span: span.into(),
@@ -111,6 +158,17 @@ impl<T: Display> Display for CommaSeperated<'_, T> {
 
         Ok(())
     }
+}
+
+#[derive(Debug, Clone, Diagnostic, Error)]
+#[diagnostic(code(vmt_reader::unexpected_token))]
+#[error("{error}")]
+pub struct UnknownError {
+    pub error: String,
+    #[label("{error}")]
+    err_span: SourceSpan,
+    #[source_code]
+    src: String,
 }
 
 /// A token that wasn't expected was found while parsing
@@ -391,7 +449,11 @@ impl serde::de::Error for VdfError {
     where
         T: Display,
     {
-        VdfError::Other(msg.to_string())
+        VdfError::Other(UnknownError {
+            err_span: (0..0).into(),
+            src: String::new(),
+            error: msg.to_string(),
+        })
     }
 
     fn unknown_variant(variant: &str, expected: &'static [&'static str]) -> Self {
