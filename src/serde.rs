@@ -374,7 +374,15 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        visitor.visit_enum(Enum::new(self))
+        let variant_token = self.peek().map(|r| r.ok()).flatten();
+        visitor
+            .visit_enum(Enum::new(self))
+            .map_err(|e| match (variant_token, &e) {
+                (Some(variant_token), VdfError::UnknownVariant(_)) => {
+                    e.with_source_span(variant_token.span, self.source())
+                }
+                _ => e,
+            })
     }
 
     fn deserialize_identifier<V>(self, visitor: V) -> Result<V::Value>

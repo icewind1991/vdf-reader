@@ -36,6 +36,10 @@ pub enum VdfError {
     ParseString(#[from] ParseStringError),
     #[error(transparent)]
     #[diagnostic(transparent)]
+    /// Failed to find an enum variant that matches the found tag
+    UnknownVariant(#[from] UnknownVariantError),
+    #[error(transparent)]
+    #[diagnostic(transparent)]
     /// Failed to parse serde string
     SerdeParse(#[from] SerdeParseError),
     #[error("{0}")]
@@ -73,14 +77,20 @@ impl VdfError {
                 ..e
             }
             .into(),
+            VdfError::UnknownVariant(e) => UnknownVariantError {
+                src: source.into(),
+                err_span: span.into(),
+                ..e
+            }
+            .into(),
             _ => self,
         }
     }
 }
 
-struct ExpectedTokens<'a>(&'a [Token]);
+struct CommaSeperated<'a, T>(&'a [T]);
 
-impl Display for ExpectedTokens<'_> {
+impl<T: Display> Display for CommaSeperated<'_, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let mut tokens = self.0.iter();
         if let Some(token) = tokens.next() {
@@ -101,7 +111,7 @@ impl Display for ExpectedTokens<'_> {
 #[derive(Debug, Clone, Diagnostic)]
 #[diagnostic(code(vmt_reader::unexpected_token))]
 pub struct UnexpectedTokenError {
-    #[label("Expected {}", ExpectedTokens(self.expected))]
+    #[label("Expected {}", CommaSeperated(self.expected))]
     err_span: SourceSpan,
     pub expected: &'static [Token],
     pub found: Option<Token>,
@@ -132,12 +142,12 @@ impl Display for UnexpectedTokenError {
                 f,
                 "Unexpected token, found {} expected one of {}",
                 token,
-                ExpectedTokens(self.expected)
+                CommaSeperated(self.expected)
             ),
             None => write!(
                 f,
                 "Unexpected end of input expected one of {}",
-                ExpectedTokens(self.expected)
+                CommaSeperated(self.expected)
             ),
         }
     }
@@ -148,9 +158,9 @@ impl Error for UnexpectedTokenError {}
 /// A token that wasn't expected was found while parsing
 #[derive(Debug, Clone, Diagnostic, Error)]
 #[diagnostic(code(vmt_reader::no_valid_token))]
-#[error("No valid token found, expected one of {}", ExpectedTokens(self.expected))]
+#[error("No valid token found, expected one of {}", CommaSeperated(self.expected))]
 pub struct NoValidTokenError {
-    #[label("Expected {}", ExpectedTokens(self.expected))]
+    #[label("Expected {}", CommaSeperated(self.expected))]
     err_span: SourceSpan,
     pub expected: &'static [Token],
     #[source_code]
@@ -282,6 +292,41 @@ impl SerdeParseError {
     }
 }
 
+#[derive(Debug, Clone, Error, Diagnostic)]
+#[error("Unknown variant {variant:?} expected on of {}", ExpectedVariants(self.expected))]
+#[diagnostic(code(vmt_parser::unknown_variant))]
+pub struct UnknownVariantError {
+    variant: String,
+    expected: &'static [&'static str],
+    #[label("{}", ExpectedVariants(self.expected))]
+    err_span: SourceSpan,
+    #[source_code]
+    src: String,
+}
+
+struct ExpectedVariants(&'static [&'static str]);
+
+impl Display for ExpectedVariants {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        if self.0.is_empty() {
+            write!(f, "there are no variants")
+        } else {
+            write!(f, "expected on of {}", CommaSeperated(self.0))
+        }
+    }
+}
+
+impl UnknownVariantError {
+    pub fn new(variant: &str, expected: &'static [&'static str], span: Span, src: &str) -> Self {
+        UnknownVariantError {
+            variant: variant.into(),
+            expected,
+            err_span: span.into(),
+            src: src.into(),
+        }
+    }
+}
+
 pub trait ExpectToken<'source> {
     fn expect_token(
         self,
@@ -341,5 +386,9 @@ impl serde::de::Error for VdfError {
         T: Display,
     {
         VdfError::Other(msg.to_string())
+    }
+
+    fn unknown_variant(variant: &str, expected: &'static [&'static str]) -> Self {
+        UnknownVariantError::new(variant, expected, 0..0, "").into()
     }
 }
