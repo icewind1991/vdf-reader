@@ -1,5 +1,5 @@
 use crate::entry::ParseItem;
-use crate::error::{ExpectToken, NoValidTokenError, SerdeParseError};
+use crate::error::{ExpectToken, NoValidTokenError, ResultExt, SerdeParseError};
 use crate::tokenizer::{SpannedToken, Tokenizer};
 use crate::{Token, VdfError};
 use logos::Span;
@@ -44,6 +44,10 @@ impl<'de> Deserializer<'de> {
             self.peeked = self.tokenizer.next();
         }
         self.peeked.clone()
+    }
+
+    fn peek_span(&mut self) -> Option<Span> {
+        self.peek().and_then(|r| r.ok()).map(|token| token.span)
     }
 
     pub fn push_peeked(&mut self, token: SpannedToken) {
@@ -92,10 +96,12 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         let source = self.source();
         let peek = self.peek().expect_token(VALUE_TOKEN, source)?;
         match peek.token {
-            Token::Item | Token::QuotedItem | Token::Statement | Token::QuotedStatement => {
-                self.deserialize_str(visitor)
-            }
-            Token::GroupStart => self.deserialize_map(visitor),
+            Token::Item | Token::QuotedItem | Token::Statement | Token::QuotedStatement => self
+                .deserialize_str(visitor)
+                .ensure_span(peek.span, self.source()),
+            Token::GroupStart => self
+                .deserialize_map(visitor)
+                .ensure_span(peek.span, self.source()),
             _ => unreachable!(),
         }
     }
@@ -485,7 +491,12 @@ impl<'de, 'a> MapAccess<'de> for TableWalker<'de, 'a> {
     where
         V: DeserializeSeed<'de>,
     {
-        seed.deserialize(&mut *self.de)
+        if let Some(span) = self.de.peek_span() {
+            seed.deserialize(&mut *self.de)
+                .ensure_span(span, self.source())
+        } else {
+            seed.deserialize(&mut *self.de)
+        }
     }
 }
 

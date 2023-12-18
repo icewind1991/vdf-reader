@@ -460,3 +460,13 @@ impl serde::de::Error for VdfError {
         UnknownVariantError::new(variant, expected, 0..0, "").into()
     }
 }
+
+pub(crate) trait ResultExt {
+    fn ensure_span(self, span: Span, source: &str) -> Self;
+}
+
+impl<T> ResultExt for Result<T, VdfError> {
+    fn ensure_span(self, span: Span, source: &str) -> Self {
+        self.map_err(|e| e.with_source_span_if_none(span, source))
+    }
+}
