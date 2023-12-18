@@ -21,7 +21,7 @@ pub enum VdfError {
     #[error(transparent)]
     #[diagnostic(transparent)]
     /// Wrong event to for conversion
-    WrongEntryType(#[from] WrongEventTypeError),
+    WrongEntryType(Box<WrongEventTypeError>),
     #[error(transparent)]
     #[diagnostic(transparent)]
     /// Failed to parse entry into type
@@ -46,6 +46,12 @@ pub enum VdfError {
     Other(String),
 }
 
+impl From<WrongEventTypeError> for VdfError {
+    fn from(value: WrongEventTypeError) -> Self {
+        Self::WrongEntryType(value.into())
+    }
+}
+
 impl VdfError {
     pub(crate) fn with_source_span<Sp: Into<SourceSpan>, Sr: Into<String>>(
         self,
@@ -68,7 +74,7 @@ impl VdfError {
             VdfError::WrongEntryType(e) => WrongEventTypeError {
                 src: source.into(),
                 err_span: span.into(),
-                ..e
+                ..*e
             }
             .into(),
             VdfError::SerdeParse(e) => SerdeParseError {

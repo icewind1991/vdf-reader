@@ -253,7 +253,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             }
             Some(Ok(token)) => token,
         };
-        if token.span.len() == 0 {
+        if token.span.is_empty() {
             return visitor.visit_none();
         }
         self.push_peeked(token);
@@ -289,7 +289,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         visitor.visit_newtype_struct(self)
     }
 
-    fn deserialize_seq<V>(mut self, visitor: V) -> Result<V::Value>
+    fn deserialize_seq<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
@@ -302,7 +302,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             visitor.visit_seq(StringArrayWalker::new(self.source(), seq, span))
         } else {
             let key = self.last_key.clone();
-            visitor.visit_seq(SeqWalker::new(&mut self, key))
+            visitor.visit_seq(SeqWalker::new(self, key))
         }
     }
 
@@ -325,7 +325,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         self.deserialize_seq(visitor)
     }
 
-    fn deserialize_map<V>(mut self, visitor: V) -> Result<V::Value>
+    fn deserialize_map<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
@@ -349,7 +349,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             }
         };
 
-        let value = visitor.visit_map(TableWalker::new(&mut self, toplevel))?;
+        let value = visitor.visit_map(TableWalker::new(self, toplevel))?;
         Ok(value)
     }
 
@@ -374,7 +374,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        let variant_token = self.peek().map(|r| r.ok()).flatten();
+        let variant_token = self.peek().and_then(|r| r.ok());
         visitor
             .visit_enum(Enum::new(self))
             .map_err(|e| match (variant_token, &e) {
@@ -577,7 +577,7 @@ where
 
         let (item, rest) = self
             .remaining
-            .split_once(" ")
+            .split_once(' ')
             .unwrap_or((self.remaining, ""));
         let item_span = self.span.start..(self.span.start + item.len());
         self.remaining = rest.trim();
