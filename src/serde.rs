@@ -94,14 +94,36 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         V: Visitor<'de>,
     {
         let source = self.source();
-        let peek = self.peek().expect_token(VALUE_TOKEN, source)?;
-        match peek.token {
-            Token::Item | Token::QuotedItem | Token::Statement | Token::QuotedStatement => self
-                .deserialize_str(visitor)
-                .ensure_span(peek.span, self.source()),
-            Token::GroupStart => self
-                .deserialize_map(visitor)
-                .ensure_span(peek.span, self.source()),
+        let token = self.next().expect_token(VALUE_TOKEN, source)?;
+        let span = token.span.clone();
+        match token.token {
+            Token::Item | Token::QuotedItem | Token::Statement | Token::QuotedStatement => {
+                let str = token.string(self.source());
+                // note: we don't check for bool as we can't distinguish those from numbers
+                if let Ok(int) = i64::from_str(str.as_ref()) {
+                    return visitor.visit_i64(int).ensure_span(span, self.source());
+                }
+                if let Ok(float) = f64::from_str(str.as_ref()) {
+                    return visitor.visit_f64(float).ensure_span(span, self.source());
+                }
+                if str.starts_with('[') && str.ends_with(']') {
+                    self.push_peeked(token);
+                    return self
+                        .deserialize_seq(visitor)
+                        .ensure_span(span, self.source());
+                }
+                match str {
+                    Cow::Borrowed(str) => visitor
+                        .visit_borrowed_str(str)
+                        .ensure_span(span, self.source()),
+                    Cow::Owned(str) => visitor.visit_string(str).ensure_span(span, self.source()),
+                }
+            }
+            Token::GroupStart => {
+                self.push_peeked(token);
+                self.deserialize_map(visitor)
+                    .ensure_span(span, self.source())
+            }
             _ => unreachable!(),
         }
     }
@@ -779,5 +801,18 @@ mod tests {
         let j = r#"Struct2 {"a" 1}"#;
         let expected = E::Struct2 { a: 1 };
         assert_eq!(expected, unwrap_err(from_str(j)));
+    }
+
+    #[test]
+    fn test_untagged_enum() {
+        #[derive(Deserialize, PartialEq, Debug)]
+        #[serde(untagged)]
+        enum E {
+            Int(u8),
+            Float(f32),
+        }
+
+        let j = r#"1.1"#;
+        assert_eq!(E::Float(1.1), unwrap_err(from_str(j)));
     }
 }

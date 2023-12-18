@@ -11,6 +11,9 @@ enum Expected {
         fixed_array: [u8; 3],
         flex_array: Vec<f32>,
         tuple: (bool, u8),
+        single: SingleOrTriple<f32>,
+        triple: SingleOrTriple<f32>,
+        single_int: SingleOrTriple<f32>,
     },
     LightmappedGeneric {
         #[serde(rename = "$baseTexture")]
@@ -50,6 +53,13 @@ enum Expected {
         #[serde(rename = "Servers")]
         servers: UserConfigDataServers,
     },
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+enum SingleOrTriple<T> {
+    Single(T),
+    Triple([T; 3]),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
