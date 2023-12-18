@@ -1,0 +1,8 @@
+---
+source: tests/parse.rs
+expression: parsed
+---
+{
+  "bar": Value("asd"),
+  "foo": Value("1"),
+}
