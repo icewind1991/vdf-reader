@@ -1,5 +1,5 @@
 use crate::entry::ParseItem;
-use crate::error::{ExpectToken, NoValidTokenError, ParseStringError};
+use crate::error::{ExpectToken, NoValidTokenError, SerdeParseError};
 use crate::tokenizer::{SpannedToken, Tokenizer};
 use crate::{Token, VdfError};
 use logos::Span;
@@ -50,13 +50,15 @@ impl<'de> Deserializer<'de> {
         self.peeked = Some(Ok(token))
     }
 
-    fn read_str(&mut self) -> Result<Cow<'de, str>> {
+    fn read_str(&mut self) -> Result<(Cow<'de, str>, Span)> {
         let token = self.next().expect_token(STRING_ITEMS, self.source())?;
-        Ok(token.string(self.source()))
+        Ok((token.string(self.source()), token.span))
     }
 
     fn parse<T: ParseItem>(&mut self) -> Result<T> {
-        T::from_str(self.read_str()?.as_ref()).map_err(VdfError::from)
+        let (str, span) = self.read_str()?;
+        T::from_str(str.as_ref())
+            .map_err(|e| SerdeParseError::new(e.ty, &e.value, span, self.source()).into())
     }
 
     fn set_last_key(&mut self, key: Cow<'de, str>) {
@@ -183,11 +185,16 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        let str = self.read_str()?;
+        let (str, span) = self.read_str()?;
         let mut chars = str.chars();
         match (chars.next(), chars.next()) {
             (Some(_), None) => Ok(()),
-            _ => Err(ParseStringError::new("char", str.as_ref())),
+            _ => Err(SerdeParseError::new(
+                "char",
+                str.as_ref(),
+                span,
+                self.source(),
+            )),
         }?;
 
         visitor.visit_str(str.as_ref())
@@ -199,14 +206,14 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        visitor.visit_str(self.read_str()?.as_ref())
+        visitor.visit_str(self.read_str()?.0.as_ref())
     }
 
     fn deserialize_string<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_string(self.read_str()?.into())
+        visitor.visit_string(self.read_str()?.0.into())
     }
 
     // The `Serializer` implementation on the previous page serialized byte
@@ -222,7 +229,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        visitor.visit_byte_buf(self.read_str()?.as_bytes().into())
+        visitor.visit_byte_buf(self.read_str()?.0.as_bytes().into())
     }
 
     // An absent optional is represented as the JSON `null` and a present
@@ -257,9 +264,9 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        let str = self.read_str()?;
+        let (str, span) = self.read_str()?;
         if !str.is_empty() {
-            return Err(ParseStringError::new("unit", str.as_ref()).into());
+            return Err(SerdeParseError::new("unit", str.as_ref(), span, self.source()).into());
         }
         visitor.visit_unit()
     }
@@ -268,9 +275,9 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        let str = self.read_str()?;
+        let (str, span) = self.read_str()?;
         if !str.is_empty() {
-            return Err(ParseStringError::new("unit", str.as_ref()).into());
+            return Err(SerdeParseError::new("unit", str.as_ref(), span, self.source()).into());
         }
         visitor.visit_unit()
     }
@@ -517,10 +524,10 @@ impl<'de, 'a> VariantAccess<'de> for Enum<'a, 'de> {
     type Error = VdfError;
 
     fn unit_variant(self) -> Result<()> {
-        let str = self.de.read_str()?;
+        let (str, span) = self.de.read_str()?;
 
         if !str.is_empty() {
-            return Err(ParseStringError::new("unit", str.as_ref()).into());
+            return Err(SerdeParseError::new("unit", str.as_ref(), span, self.source()).into());
         }
 
         Ok(())

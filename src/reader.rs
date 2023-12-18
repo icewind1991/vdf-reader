@@ -8,7 +8,6 @@ use std::borrow::Cow;
 pub struct Reader<'a> {
     pub source: &'a str,
     lexer: SpannedIter<'a, Token>,
-    peeked: Option<(Result<Token, <Token as Logos<'a>>::Error>, Span)>,
 }
 
 impl<'a> From<&'a str> for Reader<'a> {
@@ -16,25 +15,13 @@ impl<'a> From<&'a str> for Reader<'a> {
         Reader {
             source: content,
             lexer: Lexer::new(content).spanned(),
-            peeked: None,
         }
     }
 }
 
 impl<'a> Reader<'a> {
     fn token(&mut self) -> Option<(Result<Token, <Token as Logos>::Error>, Span)> {
-        if let Some((token, span)) = self.peeked.take() {
-            Some((token, span))
-        } else {
-            self.lexer.next()
-        }
-    }
-
-    fn peek(&mut self) -> Option<(Result<Token, <Token as Logos>::Error>, Span)> {
-        if self.peeked.is_none() {
-            self.peeked = self.lexer.next();
-        }
-        self.peeked.clone()
+        self.lexer.next()
     }
 
     pub fn span(&self) -> Span {

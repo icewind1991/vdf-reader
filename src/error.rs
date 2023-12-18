@@ -34,6 +34,10 @@ pub enum VdfError {
     #[diagnostic(transparent)]
     /// Failed to parse string into type
     ParseString(#[from] ParseStringError),
+    #[error(transparent)]
+    #[diagnostic(transparent)]
+    /// Failed to parse serde string
+    SerdeParse(#[from] SerdeParseError),
     #[error("{0}")]
     Other(String),
 }
@@ -173,7 +177,7 @@ impl WrongEventTypeError {
 
 #[derive(Debug, Clone, Error, Diagnostic)]
 #[error("Can't parse entry {value:?} as {ty}")]
-#[diagnostic(code(vmt_parser::eof))]
+#[diagnostic(code(vmt_parser::parse_value))]
 pub struct ParseEntryError {
     pub ty: &'static str,
     pub value: Entry,
@@ -187,7 +191,7 @@ impl ParseEntryError {
 
 #[derive(Debug, Clone, Error, Diagnostic)]
 #[error("Can't parse entry {value:?} as {ty}")]
-#[diagnostic(code(vmt_parser::eof))]
+#[diagnostic(code(vmt_parser::parse_item))]
 pub struct ParseItemError {
     pub ty: &'static str,
     pub value: Item<'static>,
@@ -203,8 +207,8 @@ impl ParseItemError {
 }
 
 #[derive(Debug, Clone, Error, Diagnostic)]
-#[error("Can't parse entry {value:?} as {ty}")]
-#[diagnostic(code(vmt_parser::eof))]
+#[error("Can't parse string {value:?} as {ty}")]
+#[diagnostic(code(vmt_parser::parse_string))]
 pub struct ParseStringError {
     pub ty: &'static str,
     pub value: String,
@@ -215,6 +219,29 @@ impl ParseStringError {
         ParseStringError {
             ty,
             value: value.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Error, Diagnostic)]
+#[error("Can't parse {value:?} as {ty}")]
+#[diagnostic(code(vmt_parser::parse_serde))]
+pub struct SerdeParseError {
+    pub ty: &'static str,
+    pub value: String,
+    #[label("Expected a {ty}")]
+    err_span: SourceSpan,
+    #[source_code]
+    src: String,
+}
+
+impl SerdeParseError {
+    pub fn new(ty: &'static str, value: &str, span: Span, src: &str) -> Self {
+        SerdeParseError {
+            ty,
+            value: value.into(),
+            err_span: span.into(),
+            src: src.into(),
         }
     }
 }
