@@ -74,11 +74,17 @@ struct UserConfigDataSteamCached {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct UserConfigDataFriendsMainDialog {
+struct DialogPos {
     xpos: u32,
     ypos: u32,
     wide: u16,
     tall: u16,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct UserConfigDataFriendsMainDialog {
+    #[serde(flatten)]
+    pos: DialogPos,
     #[serde(rename = "FriendPanelSelf")]
     friends_panel_self: BTreeMap<String, String>,
     #[serde(rename = "FriendsDialogSheet")]
@@ -109,10 +115,8 @@ struct UserConfigDataServers {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct UserConfigDataServersDialog {
-    xpos: u32,
-    ypos: u32,
-    wide: u16,
-    tall: u16,
+    #[serde(flatten)]
+    pos: DialogPos,
     #[serde(rename = "GameTabs")]
     game_tabs: UserConfigDataServersDialogGameTabs,
 }

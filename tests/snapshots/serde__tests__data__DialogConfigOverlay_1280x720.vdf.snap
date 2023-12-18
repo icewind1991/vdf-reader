@@ -8,13 +8,13 @@ UserConfigData(
       r#OverlaySplash.res: {},
     ),
   ),
-  FriendsMainDialog: UserConfigDataFriendsMainDialog(
-    xpos: 1028,
-    ypos: 280,
-    wide: 252,
-    tall: 440,
-    FriendPanelSelf: {},
-    FriendsDialogSheet: UserConfigDataFriendsMainDialogFriendsDialogSheet(
+  FriendsMainDialog: {
+    "xpos": 1028,
+    "ypos": 280,
+    "wide": 252,
+    "tall": 440,
+    "FriendPanelSelf": {},
+    "FriendsDialogSheet": UserConfigDataFriendsMainDialogFriendsDialogSheet(
       FriendsFriendsPage: UserConfigDataFriendsMainDialogFriendsDialogSheetFriendsPage(
         BuddyList: {
           "0_collapsed": false,
@@ -35,15 +35,15 @@ UserConfigData(
         },
       ),
     ),
-    FriendsState: {},
-  ),
+    "FriendsState": {},
+  },
   Servers: UserConfigDataServers(
-    r#DialogServerBrowser.res: UserConfigDataServersDialog(
-      xpos: 0,
-      ypos: 0,
-      wide: 1280,
-      tall: 720,
-      GameTabs: UserConfigDataServersDialogGameTabs(
+    r#DialogServerBrowser.res: {
+      "xpos": 0,
+      "ypos": 0,
+      "wide": 1280,
+      "tall": 720,
+      "GameTabs": UserConfigDataServersDialogGameTabs(
         InternetGames: GameListHaver(
           gamelist: GameList(
             r##ServerBrowser_Password_hidden: false,
@@ -147,6 +147,6 @@ UserConfigData(
           ),
         ),
       ),
-    ),
+    },
   ),
 )
