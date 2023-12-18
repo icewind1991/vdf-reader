@@ -16,7 +16,7 @@ pub enum Token {
     #[display("end of group")]
     GroupEnd,
     /// An enclosed or bare item.
-    #[regex("[^# \t\n{}\"][^ \t\n{}]*", priority = 0)]
+    #[regex("[^# \t\n{}\"][^ \t\n\r{}]*", priority = 0)]
     #[display("item")]
     Item,
     /// An enclosed or bare item.
@@ -24,7 +24,7 @@ pub enum Token {
     #[display("quoted item")]
     QuotedItem,
     /// An enclosed or bare statement.
-    #[regex("#[^ \"\t\n{}]+")]
+    #[regex("#[^ \"\t\n\r{}]+")]
     #[display("statement")]
     Statement,
     /// An enclosed or bare statement.
