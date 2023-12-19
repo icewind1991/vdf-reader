@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
 
 /// A table of entries.
-#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize, Default)]
 #[serde(transparent)]
 pub struct Table(#[serde(serialize_with = "ordered_map")] HashMap<String, Entry>);
 

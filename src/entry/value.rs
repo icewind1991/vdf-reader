@@ -8,7 +8,7 @@ use std::borrow::Cow;
 use std::fmt::Formatter;
 use std::ops::{Deref, DerefMut};
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Default)]
 #[serde(transparent)]
 pub struct Value(String);
 

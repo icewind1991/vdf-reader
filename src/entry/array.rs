@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
 
 /// An array of entries (items that have the same key).
-#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize, Default)]
 #[serde(transparent)]
 pub struct Array(Vec<Entry>);
 

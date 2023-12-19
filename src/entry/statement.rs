@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use std::ops::Deref;
 
 /// A statement.
-#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize, Default)]
 #[serde(transparent)]
 pub struct Statement(String);
 
