@@ -1,4 +1,4 @@
-use crate::entry::{Entry, ParseItem};
+use crate::entry::{string_is_array, Entry, ParseItem};
 use crate::error::{ExpectToken, NoValidTokenError, ResultExt, SerdeParseError};
 use crate::tokenizer::{SpannedToken, Tokenizer};
 use crate::{Token, VdfError};
@@ -127,7 +127,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                 if let Ok(float) = f64::from_str(str.as_ref()) {
                     return visitor.visit_f64(float).ensure_span(span, self.source());
                 }
-                if str.starts_with('[') && str.ends_with(']') {
+                if string_is_array(&str) {
                     self.push_peeked(token);
                     return self
                         .deserialize_seq(visitor)
@@ -350,7 +350,9 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     {
         let token = self.peek().expect_token(STRING_ITEMS, self.source())?;
         let value_str = &self.source()[token.span.clone()];
-        if value_str.starts_with("\"[") && value_str.ends_with("]\"") {
+        if (value_str.starts_with("\"[") && value_str.ends_with("]\""))
+            || (value_str.starts_with("\"{") && value_str.ends_with("}\""))
+        {
             let _ = self.next();
             let seq = &value_str[2..value_str.len() - 2];
             let span = token.span.start + 2..token.span.end - 2;

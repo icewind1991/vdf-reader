@@ -1,4 +1,5 @@
 use super::Entry;
+use crate::entry::Value;
 use crate::VdfError;
 use serde::de::{DeserializeSeed, SeqAccess};
 use serde::{Deserialize, Serialize};
@@ -8,6 +9,18 @@ use std::ops::{Deref, DerefMut};
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct Array(Vec<Entry>);
+
+impl Array {
+    pub(crate) fn from_space_separated(str: &str) -> Self {
+        let items = str
+            .split(' ')
+            .filter(|part| !part.is_empty())
+            .map(Value::from)
+            .map(Entry::from)
+            .collect();
+        Array(items)
+    }
+}
 
 impl From<Vec<Entry>> for Array {
     fn from(value: Vec<Entry>) -> Self {

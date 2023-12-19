@@ -1,5 +1,5 @@
 use super::{Array, Entry};
-use crate::entry::{Statement, Value};
+use crate::entry::{string_is_array, Statement, Value};
 use crate::error::UnknownError;
 use crate::event::{EntryEvent, GroupStartEvent};
 use crate::{Event, Item, Reader, Result, VdfError};
@@ -70,7 +70,18 @@ impl Table {
                     key: Item::Item { content: key, .. },
                     value,
                     ..
-                }) => insert(&mut map, key, Value::from(value.into_content())),
+                }) => {
+                    if string_is_array(value.as_str()) {
+                        let str = value.as_str();
+                        insert(
+                            &mut map,
+                            key,
+                            Array::from_space_separated(&str[1..str.len() - 1]),
+                        )
+                    } else {
+                        insert(&mut map, key, Value::from(value.into_content()))
+                    }
+                }
 
                 Event::Entry(EntryEvent {
                     key: Item::Statement { content: key, .. },

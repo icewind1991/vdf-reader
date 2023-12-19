@@ -1,5 +1,5 @@
 use super::Entry;
-use crate::entry::{ParseItem, Statement};
+use crate::entry::{string_is_array, ParseItem, Statement};
 use crate::error::{ParseStringError, SerdeParseError};
 use crate::VdfError;
 use serde::de::{Error, Visitor};
@@ -142,7 +142,7 @@ impl<'de> Deserializer<'de> for Value {
         if let Ok(float) = f64::from_str(&self.0) {
             return visitor.visit_f64(float);
         }
-        if self.0.starts_with('[') && self.0.ends_with(']') {
+        if string_is_array(&self.0) {
             return self.deserialize_seq(visitor);
         }
         visitor.visit_string(self.0)
@@ -315,6 +315,7 @@ impl<'de> Deserializer<'de> for Value {
     where
         V: Visitor<'de>,
     {
+        dbg!(&self);
         Err(SerdeParseError::new("seq", self.0.as_ref(), 0..0, "").into())
     }
 

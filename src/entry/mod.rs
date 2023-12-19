@@ -353,6 +353,7 @@ impl<'de> Deserializer<'de> for Entry {
     {
         match self {
             Entry::Value(val) => val.deserialize_bool(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_bool(visitor),
             _ => Err(UnknownError::from("bool").into()),
         }
     }
@@ -363,6 +364,7 @@ impl<'de> Deserializer<'de> for Entry {
     {
         match self {
             Entry::Value(val) => val.deserialize_i8(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_i8(visitor),
             _ => Err(UnknownError::from("i8").into()),
         }
     }
@@ -373,6 +375,7 @@ impl<'de> Deserializer<'de> for Entry {
     {
         match self {
             Entry::Value(val) => val.deserialize_i16(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_i16(visitor),
             _ => Err(UnknownError::from("i16").into()),
         }
     }
@@ -383,6 +386,7 @@ impl<'de> Deserializer<'de> for Entry {
     {
         match self {
             Entry::Value(val) => val.deserialize_i32(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_i32(visitor),
             _ => Err(UnknownError::from("i32").into()),
         }
     }
@@ -393,6 +397,7 @@ impl<'de> Deserializer<'de> for Entry {
     {
         match self {
             Entry::Value(val) => val.deserialize_i64(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_i64(visitor),
             _ => Err(UnknownError::from("i64").into()),
         }
     }
@@ -403,6 +408,7 @@ impl<'de> Deserializer<'de> for Entry {
     {
         match self {
             Entry::Value(val) => val.deserialize_u8(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_u8(visitor),
             _ => Err(UnknownError::from("u8").into()),
         }
     }
@@ -413,6 +419,7 @@ impl<'de> Deserializer<'de> for Entry {
     {
         match self {
             Entry::Value(val) => val.deserialize_u16(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_u16(visitor),
             _ => Err(UnknownError::from("u16").into()),
         }
     }
@@ -423,6 +430,7 @@ impl<'de> Deserializer<'de> for Entry {
     {
         match self {
             Entry::Value(val) => val.deserialize_u32(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_u32(visitor),
             _ => Err(UnknownError::from("u32").into()),
         }
     }
@@ -433,6 +441,7 @@ impl<'de> Deserializer<'de> for Entry {
     {
         match self {
             Entry::Value(val) => val.deserialize_u64(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_u64(visitor),
             _ => Err(UnknownError::from("u64").into()),
         }
     }
@@ -443,6 +452,7 @@ impl<'de> Deserializer<'de> for Entry {
     {
         match self {
             Entry::Value(val) => val.deserialize_f32(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_f32(visitor),
             _ => Err(UnknownError::from("f32").into()),
         }
     }
@@ -453,6 +463,7 @@ impl<'de> Deserializer<'de> for Entry {
     {
         match self {
             Entry::Value(val) => val.deserialize_f64(visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_f64(visitor),
             _ => Err(UnknownError::from("f64").into()),
         }
     }
@@ -542,6 +553,7 @@ impl<'de> Deserializer<'de> for Entry {
     {
         match self {
             Entry::Value(val) => val.deserialize_unit_struct(name, visitor),
+            Entry::Statement(val) => Value::from(val).deserialize_unit_struct(name, visitor),
             _ => Err(UnknownError::from("unit_struct").into()),
         }
     }
@@ -561,7 +573,7 @@ impl<'de> Deserializer<'de> for Entry {
     where
         V: Visitor<'de>,
     {
-        match self {
+        match dbg!(self) {
             Entry::Array(arr) => visitor.visit_seq(ArraySeq::new(arr)),
             _ => Err(UnknownError::from("array2").into()),
         }
@@ -571,7 +583,7 @@ impl<'de> Deserializer<'de> for Entry {
     where
         V: Visitor<'de>,
     {
-        match self {
+        match dbg!(self) {
             Entry::Array(arr) => visitor.visit_seq(ArraySeq::new(arr)),
             _ => Err(UnknownError::from("tuple").into()),
         }
@@ -743,4 +755,23 @@ fn test_serde_entry() {
         ),
         unwrap_err(crate::from_str(j))
     );
+
+    let j = r#""{1 2 3}""#;
+
+    assert_eq!(
+        Entry::Array(
+            vec![
+                Value::from("1").into(),
+                Value::from("2").into(),
+                Value::from("3").into()
+            ]
+            .into()
+        ),
+        unwrap_err(crate::from_str(j))
+    );
+}
+
+pub(crate) fn string_is_array(string: &str) -> bool {
+    (string.starts_with('[') && string.ends_with(']'))
+        || (string.starts_with('{') && string.ends_with('}'))
 }
