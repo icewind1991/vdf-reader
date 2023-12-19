@@ -7,7 +7,7 @@ use serde::de::{DeserializeSeed, MapAccess};
 use serde::{Deserialize, Serialize, Serializer};
 use std::collections::hash_map;
 use std::collections::HashMap;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
 /// A table of entries.
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
@@ -107,6 +107,12 @@ impl Deref for Table {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl DerefMut for Table {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 

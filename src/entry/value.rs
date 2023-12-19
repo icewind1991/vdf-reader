@@ -6,7 +6,7 @@ use serde::de::{Error, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::borrow::Cow;
 use std::fmt::Formatter;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(transparent)]
@@ -52,6 +52,12 @@ impl Deref for Value {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl DerefMut for Value {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
