@@ -354,7 +354,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             || (value_str.starts_with("\"{") && value_str.ends_with("}\""))
         {
             let _ = self.next();
-            let seq = &value_str[2..value_str.len() - 2];
+            let seq = &value_str[2..value_str.len() - 2].trim();
             let span = token.span.start + 2..token.span.end - 2;
             visitor.visit_seq(StringArrayWalker::new(self.source(), seq, span))
         } else {

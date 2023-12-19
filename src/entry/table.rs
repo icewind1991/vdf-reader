@@ -71,12 +71,12 @@ impl Table {
                     value,
                     ..
                 }) => {
-                    if string_is_array(value.as_str()) {
-                        let str = value.as_str();
+                    let str = value.as_str();
+                    if string_is_array(str) {
                         insert(
                             &mut map,
                             key,
-                            Array::from_space_separated(&str[1..str.len() - 1]),
+                            Array::from_space_separated(str[1..str.len() - 1].trim()),
                         )
                     } else {
                         insert(&mut map, key, Value::from(value.into_content()))

@@ -573,7 +573,7 @@ impl<'de> Deserializer<'de> for Entry {
     where
         V: Visitor<'de>,
     {
-        match dbg!(self) {
+        match self {
             Entry::Array(arr) => visitor.visit_seq(ArraySeq::new(arr)),
             _ => Err(UnknownError::from("array2").into()),
         }
@@ -583,7 +583,7 @@ impl<'de> Deserializer<'de> for Entry {
     where
         V: Visitor<'de>,
     {
-        match dbg!(self) {
+        match self {
             Entry::Array(arr) => visitor.visit_seq(ArraySeq::new(arr)),
             _ => Err(UnknownError::from("tuple").into()),
         }
