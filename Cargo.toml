@@ -2,6 +2,9 @@
 name = "vdf-reader"
 version = "0.1.0"
 edition = "2021"
+description = "Rust parser for valve vdf files."
+license = "MIT"
+repository = "https://github.com/icewind1991/vdf-reader"
 rust-version = "1.65.0"
 
 [dependencies]
