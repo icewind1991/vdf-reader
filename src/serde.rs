@@ -436,7 +436,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             .visit_enum(Enum::new(self))
             .map_err(|e| match (variant_token, &e) {
                 (Some(variant_token), VdfError::UnknownVariant(_)) => {
-                    e.with_source_span(variant_token.span, self.source())
+                    e.with_source_span(variant_token.span.start..self.last_span.end, self.source())
                 }
                 _ => e,
             })
@@ -662,10 +662,6 @@ impl<'a, 'de> Enum<'a, 'de> {
     fn new(de: &'a mut Deserializer<'de>) -> Self {
         Enum { de }
     }
-
-    fn source(&self) -> &'de str {
-        self.de.source()
-    }
 }
 
 // `EnumAccess` is provided to the `Visitor` to give it the ability to determine
@@ -692,12 +688,6 @@ impl<'de, 'a> VariantAccess<'de> for Enum<'a, 'de> {
     type Error = VdfError;
 
     fn unit_variant(self) -> Result<()> {
-        let (str, span) = self.de.read_str()?;
-
-        if !str.is_empty() {
-            return Err(SerdeParseError::new("unit", str.as_ref(), span, self.source()).into());
-        }
-
         Ok(())
     }
 

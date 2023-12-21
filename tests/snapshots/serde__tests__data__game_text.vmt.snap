@@ -1,0 +1,10 @@
+---
+source: tests/serde.rs
+expression: result
+---
+Sprite(
+  r#$spriteorientation: vp_parallel,
+  r#$spriteorigin: (0.5, 0.5),
+  r#$basetexture: "editor/game_text",
+  r#$no_fullbright: true,
+)

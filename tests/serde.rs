@@ -56,7 +56,7 @@ enum Expected {
     },
     Sprite {
         #[serde(rename = "$spriteorientation")]
-        sprite_orientation: String,
+        sprite_orientation: SpriteOrientation,
         #[serde(rename = "$spriteorigin")]
         sprite_origin: [f32; 2],
         #[serde(rename = "$basetexture")]
@@ -64,6 +64,16 @@ enum Expected {
         #[serde(rename = "$no_fullbright")]
         no_full_bright: bool,
     },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum SpriteOrientation {
+    ParallelUpright,
+    #[default]
+    VpParallel,
+    Oriented,
+    VpParallelOriented,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
