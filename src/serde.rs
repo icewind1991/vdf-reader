@@ -656,11 +656,15 @@ where
 
 struct Enum<'a, 'de: 'a> {
     de: &'a mut Deserializer<'de>,
+    enclosed: bool,
 }
 
 impl<'a, 'de> Enum<'a, 'de> {
     fn new(de: &'a mut Deserializer<'de>) -> Self {
-        Enum { de }
+        Enum {
+            de,
+            enclosed: false,
+        }
     }
 }
 
@@ -673,10 +677,19 @@ impl<'de, 'a> EnumAccess<'de> for Enum<'a, 'de> {
     type Error = VdfError;
     type Variant = Self;
 
-    fn variant_seed<V>(self, seed: V) -> Result<(V::Value, Self::Variant)>
+    fn variant_seed<V>(mut self, seed: V) -> Result<(V::Value, Self::Variant)>
     where
         V: DeserializeSeed<'de>,
     {
+        if self
+            .de
+            .peek()
+            .expect_token(&[Token::GroupStart], self.de.source())
+            .is_ok()
+        {
+            self.enclosed = true;
+            let _ = self.de.next();
+        }
         let val = seed.deserialize(&mut *self.de)?;
         Ok((val, self))
     }
@@ -695,21 +708,39 @@ impl<'de, 'a> VariantAccess<'de> for Enum<'a, 'de> {
     where
         T: DeserializeSeed<'de>,
     {
-        seed.deserialize(self.de)
+        let val = seed.deserialize(&mut *self.de)?;
+        if self.enclosed {
+            self.de
+                .next()
+                .expect_token(&[Token::GroupEnd], self.de.source())?;
+        }
+        Ok(val)
     }
 
     fn tuple_variant<V>(self, _len: usize, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        de::Deserializer::deserialize_seq(self.de, visitor)
+        let val = de::Deserializer::deserialize_seq(&mut *self.de, visitor)?;
+        if self.enclosed {
+            self.de
+                .next()
+                .expect_token(&[Token::GroupEnd], self.de.source())?;
+        }
+        Ok(val)
     }
 
     fn struct_variant<V>(self, _fields: &'static [&'static str], visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        de::Deserializer::deserialize_map(self.de, visitor)
+        let val = de::Deserializer::deserialize_map(&mut *self.de, visitor)?;
+        if self.enclosed {
+            self.de
+                .next()
+                .expect_token(&[Token::GroupEnd], self.de.source())?;
+        }
+        Ok(val)
     }
 }
 

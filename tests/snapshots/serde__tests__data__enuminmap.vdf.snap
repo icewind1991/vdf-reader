@@ -1,0 +1,9 @@
+---
+source: tests/serde.rs
+expression: result
+---
+EnumInMap(
+  foo: bar(
+    a: true,
+  ),
+)

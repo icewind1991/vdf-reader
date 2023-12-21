@@ -1,0 +1,7 @@
+EnumInMap {
+  foo {
+    bar {
+      a 1
+    }
+  }
+}

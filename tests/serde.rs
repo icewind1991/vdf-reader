@@ -64,6 +64,16 @@ enum Expected {
         #[serde(rename = "$no_fullbright")]
         no_full_bright: bool,
     },
+    EnumInMap {
+        foo: EnumInMap,
+    },
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum EnumInMap {
+    Bar { a: bool },
+    Foo { a: bool },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -194,6 +204,7 @@ struct GameList {
 #[test_case("tests/data/DialogConfigOverlay_1280x720.vdf")]
 #[test_case("tests/data/serde_array_type.vdf")]
 #[test_case("tests/data/game_text.vmt")]
+#[test_case("tests/data/enuminmap.vdf")]
 #[test_case("tests/errors/unmatched.vdf")]
 #[test_case("tests/errors/concrete.vmt")]
 #[test_case("tests/errors/novalue.vdf")]
