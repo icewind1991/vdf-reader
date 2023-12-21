@@ -4,11 +4,11 @@ expression: out
 ---
 vmt_parser::unknown_variant
 
-  × Unknown variant "Resource" expected on of expected on of Types, LightmappedGeneric, Resource/specificPanel.res, UserConfigData
+  × Unknown variant "Resource" expected on of expected on of Types, LightmappedGeneric, Resource/specificPanel.res, UserConfigData, Sprite
    ╭─[1:1]
  1 │ "Resource"
    · ─────┬────
-   ·      ╰── expected on of Types, LightmappedGeneric, Resource/specificPanel.res, UserConfigData
+   ·      ╰── expected on of Types, LightmappedGeneric, Resource/specificPanel.res, UserConfigData, Sprite
  2 │ {
    ╰────
 
