@@ -5,7 +5,7 @@ expression: out
 vmt_reader::unexpected_token
 
   × Unexpected token, found end of group expected one of item, quoted item, statement, quoted statement, start of group
-   ╭─[3:1]
+   ╭─[4:1]
  3 │     foo
  4 │ }
    · ┬

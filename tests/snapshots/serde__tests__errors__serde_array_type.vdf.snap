@@ -5,7 +5,7 @@ expression: out
 vmt_parser::parse_serde
 
   × Can't parse "3.1" as u8
-   ╭─[1:1]
+   ╭─[2:23]
  1 │ "Types" {
  2 │     fixed_array "[1 2 3.1]"
    ·                       ─┬─
