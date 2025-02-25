@@ -38,7 +38,7 @@ impl<'source> Tokenizer<'source> {
     }
 }
 
-impl<'source> Iterator for Tokenizer<'source> {
+impl Iterator for Tokenizer<'_> {
     type Item = Result<SpannedToken, Span>;
 
     fn next(&mut self) -> Option<Self::Item> {

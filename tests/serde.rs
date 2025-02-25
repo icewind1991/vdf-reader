@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_names)]
+
 use miette::{GraphicalReportHandler, GraphicalTheme};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -7,6 +9,7 @@ use vdf_reader::entry::Table;
 use vdf_reader::{from_entry, from_str};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[allow(clippy::large_enum_variant)]
 enum Expected {
     Types {
         fixed_array: [u8; 3],

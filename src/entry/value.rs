@@ -401,5 +401,5 @@ fn test_serde_value() {
 #[test]
 fn test_serde_from_value() {
     let j = Value::from("1");
-    assert_eq!(true, unwrap_err(crate::from_entry(j.into())));
+    assert!(unwrap_err(crate::from_entry(j.into())));
 }

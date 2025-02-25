@@ -107,7 +107,7 @@ const VALUE_TOKEN: &[Token] = &[
     Token::GroupStart,
 ];
 
-impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
+impl<'de> de::Deserializer<'de> for &'_ mut Deserializer<'de> {
     type Error = VdfError;
 
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
@@ -518,7 +518,7 @@ impl<'source, 'a> TableWalker<'source, 'a> {
     }
 }
 
-impl<'de, 'a> MapAccess<'de> for TableWalker<'de, 'a> {
+impl<'de> MapAccess<'de> for TableWalker<'de, '_> {
     type Error = VdfError;
 
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>>
@@ -572,7 +572,7 @@ impl<'source, 'a> SeqWalker<'source, 'a> {
     }
 }
 
-impl<'de, 'a> SeqAccess<'de> for SeqWalker<'de, 'a> {
+impl<'de> SeqAccess<'de> for SeqWalker<'de, '_> {
     type Error = VdfError;
 
     fn next_element_seed<T>(
@@ -673,7 +673,7 @@ impl<'a, 'de> Enum<'a, 'de> {
 //
 // Note that all enum deserialization methods in Serde refer exclusively to the
 // "externally tagged" enum representation.
-impl<'de, 'a> EnumAccess<'de> for Enum<'a, 'de> {
+impl<'de> EnumAccess<'de> for Enum<'_, 'de> {
     type Error = VdfError;
     type Variant = Self;
 
@@ -697,7 +697,7 @@ impl<'de, 'a> EnumAccess<'de> for Enum<'a, 'de> {
 
 // `VariantAccess` is provided to the `Visitor` to give it the ability to see
 // the content of the single variant that it decided to deserialize.
-impl<'de, 'a> VariantAccess<'de> for Enum<'a, 'de> {
+impl<'de> VariantAccess<'de> for Enum<'_, 'de> {
     type Error = VdfError;
 
     fn unit_variant(self) -> Result<()> {
