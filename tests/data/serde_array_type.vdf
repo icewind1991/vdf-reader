@@ -5,4 +5,5 @@
     single 1.2
     triple "{1.2 1.3 1.4}"
     single_int 2
+    another_tuple 8 foo 0
 }

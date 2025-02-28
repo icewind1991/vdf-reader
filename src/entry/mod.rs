@@ -122,6 +122,20 @@ impl Entry {
             _ => None,
         }
     }
+
+    pub fn parse<'a, T: Deserialize<'a>>(&'a self) -> Result<T, ParseEntryError> {
+        let str = self
+            .as_str()
+            .ok_or_else(|| ParseEntryError::new(type_name::<T>(), self.clone()))?;
+        let mut deserializer = crate::serde::Deserializer::from_str(str);
+        let result = T::deserialize(&mut deserializer)
+            .map_err(|_| ParseEntryError::new(type_name::<T>(), self.clone()))?;
+        if deserializer.next().is_some() {
+            Err(ParseEntryError::new(type_name::<T>(), self.clone()))
+        } else {
+            Ok(result)
+        }
+    }
 }
 
 /// Parsable types.
@@ -768,6 +782,21 @@ fn test_serde_entry() {
             .into()
         ),
         unwrap_err(crate::from_str(j))
+    );
+}
+
+#[test]
+fn test_parse_entry() {
+    assert_eq!(1, Entry::Value("1".into()).parse::<usize>().unwrap());
+    assert_eq!(
+        vec!(1, 2, 3),
+        Entry::Value("1 2 3".into()).parse::<Vec<u8>>().unwrap()
+    );
+    assert_eq!(
+        (1, 2, 3),
+        Entry::Value("1 2 3".into())
+            .parse::<(u8, u8, u8)>()
+            .unwrap()
     );
 }
 

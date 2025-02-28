@@ -484,7 +484,7 @@ impl<'source, 'a> TableWalker<'source, 'a> {
         self.de.source()
     }
 
-    fn key_token(&mut self) -> Result<Option<SpannedToken>> {
+    fn key_token(&mut self, retain_group_end: bool) -> Result<Option<SpannedToken>> {
         if self.done {
             return Ok(None);
         }
@@ -512,6 +512,9 @@ impl<'source, 'a> TableWalker<'source, 'a> {
 
         if key.token == Token::GroupEnd {
             self.done = true;
+            if retain_group_end {
+                self.de.push_peeked(key);
+            }
             return Ok(None);
         }
         Ok(Some(key))
@@ -525,7 +528,7 @@ impl<'de> MapAccess<'de> for TableWalker<'de, '_> {
     where
         K: DeserializeSeed<'de>,
     {
-        let key = match self.key_token() {
+        let key = match self.key_token(false) {
             Ok(Some(key)) => key,
             Ok(None) => {
                 return Ok(None);
@@ -585,20 +588,37 @@ impl<'de> SeqAccess<'de> for SeqWalker<'de, '_> {
         if self.done {
             return Ok(None);
         }
-        let value = seed.deserialize(&mut *self.table.de).map(Some)?;
 
-        let key_token = match self.table.key_token() {
-            Ok(Some(key)) => key,
-            Ok(None) => {
-                return Ok(None);
-            }
+        let value = match seed.deserialize(&mut *self.table.de) {
+            Ok(value) => Some(value),
+            Err(VdfError::NoValidToken(_)) => None,
             Err(e) => return Err(e),
         };
 
-        let key = key_token.string(self.source());
-        if key != self.key {
-            self.table.de.push_peeked(key_token);
-            self.done = true;
+        let value_span = self.table.de.last_span.clone();
+        let newline = match self.table.de.peek_span() {
+            Some(next_span) => {
+                let whitespace = &self.source()[value_span.end..next_span.start];
+                whitespace.contains('\n')
+            }
+            _ => false,
+        };
+
+        if newline {
+            let key_token = match self.table.key_token(true) {
+                Ok(Some(key)) => key,
+                Ok(None) => {
+                    self.done = true;
+                    return Ok(value);
+                }
+                Err(e) => return Err(e),
+            };
+
+            let key = key_token.string(self.source());
+            if key != self.key {
+                self.table.de.push_peeked(key_token);
+                self.done = true;
+            }
         }
 
         Ok(value)
@@ -865,5 +885,26 @@ mod tests {
 
         let j = r#"1.1"#;
         assert_eq!(E::Float(1.1), unwrap_err(from_str(j)));
+    }
+
+    #[test]
+    fn test_list_in_struct() {
+        #[derive(Deserialize, PartialEq, Debug)]
+        struct Test {
+            seq: Vec<u8>,
+        }
+
+        let j = r#"{
+            seq 1
+            seq 2
+            seq 3
+        }"#;
+        let expected = Test { seq: vec![1, 2, 3] };
+        assert_eq!(expected, unwrap_err(from_str(j)));
+
+        let j = r#"{
+            seq 1 2 3
+        }"#;
+        assert_eq!(expected, unwrap_err(from_str(j)));
     }
 }

@@ -8,6 +8,6 @@
     array "3"
     windows_path "C:\test\no newline"
 
-    \\"$translucent" 1 // this is read vdf written by real valve developers
-    "$envmaptint" .5 .5 .5 // found in the wild, pretty sure they mean "[.5 .5 .5]", but it ends up working by accident with a stray `.5 = .5` kv
+    \\"$translucent" 1 // this is real vdf written by real valve developers
+    "$envmaptint" .5 .5 .5
 }

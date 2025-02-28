@@ -1,0 +1,16 @@
+---
+source: tests/serde.rs
+expression: out
+---
+vmt_reader::unexpected_token
+
+  × invalid type: boolean `true`, expected u32
+    ╭─[6:9]
+  5 │       }
+  6 │ ╭─▶   data2 {
+  7 │ │       kind Bar
+  8 │ │       val1 1
+  9 │ ├─▶   }
+    · ╰──── invalid type: boolean `true`, expected u32
+ 10 │     }
+    ╰────

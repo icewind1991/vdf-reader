@@ -18,6 +18,7 @@ enum Expected {
         single: SingleOrTriple<f32>,
         triple: SingleOrTriple<f32>,
         single_int: SingleOrTriple<f32>,
+        another_tuple: (u8, String, bool),
     },
     LightmappedGeneric {
         #[serde(rename = "$baseTexture")]
@@ -45,9 +46,7 @@ enum Expected {
         #[serde(rename = r#"\\"$translucent""#)]
         translucent: bool,
         #[serde(rename = "$envmaptint")]
-        env_map_tint: f32,
-        #[serde(rename = ".5")]
-        spare: f32,
+        env_map_tint: [f32; 3],
     },
     UserConfigData {
         #[serde(rename = "Steam")]
