@@ -82,6 +82,13 @@ impl<'de> Deserialize<'de> for Value {
                 write!(formatter, "any string like value")
             }
 
+            fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                Ok(if v { "1".into() } else { "0".into() })
+            }
+
             fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
             where
                 E: Error,
@@ -115,13 +122,6 @@ impl<'de> Deserialize<'de> for Value {
                 E: Error,
             {
                 Ok(v)
-            }
-
-            fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
-            where
-                E: Error,
-            {
-                Ok(if v { "1".into() } else { "0".into() })
             }
         }
 

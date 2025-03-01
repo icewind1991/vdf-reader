@@ -250,6 +250,7 @@ fn test_serde_table(path: &str) {
 fn test_serde_from_table(path: &str) {
     let raw = read_to_string(path).unwrap();
     let result = Table::load_from_str(&raw).unwrap();
+    dbg!(&result);
 
     let material: Expected = from_entry(result.into()).expect("table to material");
     insta::assert_ron_snapshot!(format!("table_to_material__{}", path), material);

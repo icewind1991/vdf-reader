@@ -60,6 +60,17 @@ pub enum Event<'a> {
 
     /// An entry.
     Entry(EntryEvent<'a>),
+
+    /// An additional value for the previous entry.
+    ValueContinuation(ValueContinuationEvent<'a>),
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum EventType {
+    GroupStart,
+    GroupEnd,
+    Entry,
+    ValueContinuation,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -87,6 +98,9 @@ impl<'a> TryFrom<Event<'a>> for GroupStartEvent<'a> {
                 Err(WrongEventTypeError::new(event, "group start", "group end").into())
             }
             Event::Entry(_) => Err(WrongEventTypeError::new(event, "group start", "entry").into()),
+            Event::ValueContinuation(_) => {
+                Err(WrongEventTypeError::new(event, "group start", "value continuation").into())
+            }
         }
     }
 }
@@ -106,6 +120,9 @@ impl<'a> TryFrom<Event<'a>> for GroupEndEvent {
                 Err(WrongEventTypeError::new(event, "group end", "group start").into())
             }
             Event::Entry(_) => Err(WrongEventTypeError::new(event, "group start", "entry").into()),
+            Event::ValueContinuation(_) => {
+                Err(WrongEventTypeError::new(event, "group start", "value continuation").into())
+            }
         }
     }
 }
@@ -137,6 +154,24 @@ impl<'a> TryFrom<Event<'a>> for EntryEvent<'a> {
             Event::GroupStart(_) => {
                 Err(WrongEventTypeError::new(event, "entry", "group start").into())
             }
+            Event::ValueContinuation(_) => {
+                Err(WrongEventTypeError::new(event, "entry", "value continuation").into())
+            }
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct ValueContinuationEvent<'a> {
+    pub value: Item<'a>,
+    pub span: Span,
+}
+
+impl ValueContinuationEvent<'_> {
+    pub fn into_owned(self) -> ValueContinuationEvent<'static> {
+        ValueContinuationEvent {
+            value: self.value.into_owned(),
+            span: self.span,
         }
     }
 }
@@ -148,6 +183,7 @@ impl Event<'_> {
             Event::GroupStart(GroupStartEvent { span, .. }) => span.clone(),
             Event::GroupEnd(GroupEndEvent { span, .. }) => span.clone(),
             Event::Entry(EntryEvent { span, .. }) => span.clone(),
+            Event::ValueContinuation(ValueContinuationEvent { span, .. }) => span.clone(),
         }
     }
     pub fn into_owned(self) -> Event<'static> {
@@ -155,6 +191,16 @@ impl Event<'_> {
             Event::GroupStart(event) => Event::GroupStart(event.into_owned()),
             Event::GroupEnd(event) => Event::GroupEnd(event),
             Event::Entry(event) => Event::Entry(event.into_owned()),
+            Event::ValueContinuation(event) => Event::ValueContinuation(event.into_owned()),
+        }
+    }
+
+    pub fn ty(&self) -> EventType {
+        match self {
+            Event::GroupStart(GroupStartEvent { .. }) => EventType::GroupStart,
+            Event::GroupEnd(GroupEndEvent { .. }) => EventType::GroupEnd,
+            Event::Entry(EntryEvent { .. }) => EventType::Entry,
+            Event::ValueContinuation(ValueContinuationEvent { .. }) => EventType::ValueContinuation,
         }
     }
 }

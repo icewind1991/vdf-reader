@@ -10,6 +10,7 @@ pub use statement::Statement;
 use std::any::type_name;
 use std::collections::HashMap;
 use std::fmt::Formatter;
+use std::mem::swap;
 use std::slice;
 pub use table::Table;
 pub use value::Value;
@@ -116,9 +117,7 @@ impl Entry {
     pub fn as_str(&self) -> Option<&str> {
         match self {
             Entry::Value(value) => Some(value),
-
             Entry::Statement(value) => Some(value),
-
             _ => None,
         }
     }
@@ -135,6 +134,32 @@ impl Entry {
         } else {
             Ok(result)
         }
+    }
+
+    fn into_array(self) -> Result<Self, ParseEntryError> {
+        match self {
+            Entry::Array(array) => Ok(Entry::Array(array)),
+            Entry::Value(value) => {
+                let mut array = Array::default();
+                array.push(value.into());
+                Ok(Entry::Array(array))
+            }
+            entry => Err(ParseEntryError::new("array", entry)),
+        }
+    }
+
+    /// Try to take the entry as a slice.
+    pub fn push(&mut self, value: Entry) -> Result<(), ParseEntryError> {
+        let mut tmp = Entry::Value(Value::default());
+
+        swap(self, &mut tmp);
+        *self = tmp.into_array()?;
+        if let Entry::Array(array) = self {
+            array.push(value);
+        } else {
+            panic!("into_array ensured this is an array")
+        }
+        Ok(())
     }
 }
 

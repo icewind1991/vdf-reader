@@ -4,8 +4,11 @@ expression: parsed
 ---
 {
   "Resource/specificPanel.res": {
-    "$envmaptint": ".5",
-    ".5": ".5",
+    "$envmaptint": [
+      ".5",
+      ".5",
+      ".5",
+    ],
     "\\\\\"$translucent\"": "1",
     "array": [
       "1",

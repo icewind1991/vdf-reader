@@ -21,7 +21,7 @@ pub enum VdfError {
     #[error(transparent)]
     #[diagnostic(transparent)]
     /// Wrong event to for conversion
-    WrongEntryType(Box<WrongEventTypeError>),
+    WrongEventType(Box<WrongEventTypeError>),
     #[error(transparent)]
     #[diagnostic(transparent)]
     /// Failed to parse entry into type
@@ -49,7 +49,7 @@ pub enum VdfError {
 
 impl From<WrongEventTypeError> for VdfError {
     fn from(value: WrongEventTypeError) -> Self {
-        Self::WrongEntryType(value.into())
+        Self::WrongEventType(value.into())
     }
 }
 
@@ -59,7 +59,7 @@ impl VdfError {
             VdfError::Other(e) => e.src.as_str(),
             VdfError::UnexpectedToken(e) => e.src.as_str(),
             VdfError::NoValidToken(e) => e.src.as_str(),
-            VdfError::WrongEntryType(e) => e.src.as_str(),
+            VdfError::WrongEventType(e) => e.src.as_str(),
             VdfError::SerdeParse(e) => e.src.as_str(),
             VdfError::UnknownVariant(e) => e.src.as_str(),
             _ => {
@@ -73,7 +73,7 @@ impl VdfError {
             VdfError::Other(e) => e.err_span,
             VdfError::UnexpectedToken(e) => e.err_span,
             VdfError::NoValidToken(e) => e.err_span,
-            VdfError::WrongEntryType(e) => e.err_span,
+            VdfError::WrongEventType(e) => e.err_span,
             VdfError::SerdeParse(e) => e.err_span,
             VdfError::UnknownVariant(e) => e.err_span,
             _ => {
@@ -118,7 +118,7 @@ impl VdfError {
                 ..e
             }
             .into(),
-            VdfError::WrongEntryType(e) => WrongEventTypeError {
+            VdfError::WrongEventType(e) => WrongEventTypeError {
                 src: source.into(),
                 err_span: span.into(),
                 ..*e

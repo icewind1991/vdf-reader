@@ -1,12 +1,15 @@
 use super::{Result, Token};
 use crate::error::{NoValidTokenError, UnexpectedTokenError};
-use crate::event::{EntryEvent, Event, GroupEndEvent, GroupStartEvent, Item};
+use crate::event::{
+    EntryEvent, Event, EventType, GroupEndEvent, GroupStartEvent, Item, ValueContinuationEvent,
+};
 use logos::{Lexer, Logos, Span, SpannedIter};
 use std::borrow::Cow;
 
 /// A VDF token reader.
 pub struct Reader<'a> {
     pub source: &'a str,
+    pub last_event: Option<EventType>,
     lexer: SpannedIter<'a, Token>,
 }
 
@@ -14,6 +17,7 @@ impl<'a> From<&'a str> for Reader<'a> {
     fn from(content: &'a str) -> Self {
         Reader {
             source: content,
+            last_event: None,
             lexer: Lexer::new(content).spanned(),
         }
     }
@@ -29,8 +33,16 @@ impl<'a> Reader<'a> {
     }
 
     /// Get the next event, this does copies.
-    #[allow(dead_code)]
     pub fn event(&mut self) -> Option<Result<Event<'a>>> {
+        let result = self.event_inner();
+        if let Some(Ok(event)) = &result {
+            self.last_event = Some(event.ty());
+        }
+        result
+    }
+
+    #[allow(dead_code)]
+    fn event_inner(&mut self) -> Option<Result<Event<'a>>> {
         const VALID_KEY: &[Token] = &[
             Token::Item,
             Token::QuotedItem,
@@ -38,6 +50,8 @@ impl<'a> Reader<'a> {
             Token::Statement,
             Token::QuotedStatement,
         ];
+
+        let whitespace_start = self.span().end;
 
         let key = match self.token() {
             None => {
@@ -85,6 +99,21 @@ impl<'a> Reader<'a> {
                 .into()))
             }
         };
+
+        let whitespace_end = self.span().start;
+        let skipped_newline = self.source[whitespace_start..whitespace_end].contains('\n');
+        let last_event_has_value = matches!(
+            self.last_event,
+            Some(EventType::Entry | EventType::ValueContinuation)
+        );
+
+        // multiple values on the same line create an array
+        if last_event_has_value && !skipped_newline {
+            return Some(Ok(Event::ValueContinuation(ValueContinuationEvent {
+                value: key,
+                span: self.span(),
+            })));
+        }
 
         const VALID_VALUE: &[Token] = &[
             Token::Item,

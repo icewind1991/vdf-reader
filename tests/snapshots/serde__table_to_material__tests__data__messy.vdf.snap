@@ -11,6 +11,5 @@ r#Resource/specificPanel.res(
   ],
   windows_path: "C:\\test\\no newline",
   r#\\"$translucent": true,
-  r#$envmaptint: 0.5,
-  r#.5: 0.5,
+  r#$envmaptint: (0.5, 0.5, 0.5),
 )
