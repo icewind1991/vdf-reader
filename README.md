@@ -1,3 +1,5 @@
+# Moved to https://codeberg.org/icewind/vdf-reader
+
 # vdf-reader
 
 A parser for Valve's Data Format v1 (VDF) also known as [KeyValues](https://developer.valvesoftware.com/wiki/KeyValues).
